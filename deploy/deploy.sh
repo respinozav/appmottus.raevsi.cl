@@ -274,21 +274,27 @@ if [ "$IS_BACKEND" = true ]; then
 
     if [ ! -z "$SERVICE_NAME" ]; then
 
+        # Asegurar permisos de lectura para www-data
+        chmod 644 "$PROJECT_DIR/.env" "$BACKEND_DIR/.env" 2>/dev/null || true
+        sudo chown -R $USER:www-data "$BACKEND_DIR"
+        sudo chmod -R 775 "$BACKEND_DIR"
+
         echo "Reiniciando servicio $SERVICE_NAME..."
 
         sudo systemctl restart "$SERVICE_NAME"
 
         sleep 2
 
-        sudo systemctl --no-pager --full status "$SERVICE_NAME"
+        if ! sudo systemctl --no-pager --full status "$SERVICE_NAME"; then
+            echo ""
+            echo -e "${RED}ERROR: El servicio $SERVICE_NAME falló al iniciar. Mostrando journalctl:${NC}"
+            sudo journalctl -u "$SERVICE_NAME" -n 50 --no-pager
+            exit 1
+        fi
 
         echo ""
         echo "Verificando respuesta del backend en 127.0.0.1:8006..."
         curl -s -i http://127.0.0.1:8006/ || true
-
-        echo ""
-        echo "Últimos logs del backend:"
-        sudo journalctl -u "$SERVICE_NAME" -n 25 --no-pager || true
 
     else
 
