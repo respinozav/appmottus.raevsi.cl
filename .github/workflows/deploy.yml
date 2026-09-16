@@ -16,5 +16,12 @@ jobs:
           username: ${{ secrets.AWS_USERNAME }}
           key: ${{ secrets.AWS_PRIVATE_KEY }}
           script: |
+            if [ ! -d "/var/www/appmottus.raevsi.cl/.git" ]; then
+              echo "Repositorio no encontrado en /var/www/appmottus.raevsi.cl. Clonando..."
+              sudo mkdir -p /var/www/appmottus.raevsi.cl
+              sudo chown -R $USER:www-data /var/www/appmottus.raevsi.cl
+              sudo chmod -R 775 /var/www/appmottus.raevsi.cl
+              git clone https://github.com/respinozav/appmottus.raevsi.cl.git /var/www/appmottus.raevsi.cl
+            fi
             cd /var/www/appmottus.raevsi.cl/deploy
             bash deploy.sh

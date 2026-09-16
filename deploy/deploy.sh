@@ -202,6 +202,18 @@ if [ "$IS_BACKEND" = true ]; then
     cd "$BACKEND_DIR"
 
     ########################################
+    # VARIABLES DE ENTORNO (.ENV)
+    ########################################
+
+    if [ ! -f "$PROJECT_DIR/.env" ] && [ -f "$PROJECT_DIR/.env.example" ]; then
+        echo "Inicializando .env desde plantilla .env.example..."
+        cp "$PROJECT_DIR/.env.example" "$PROJECT_DIR/.env"
+        cp "$PROJECT_DIR/.env.example" "$BACKEND_DIR/.env"
+    elif [ -f "$PROJECT_DIR/.env" ] && [ ! -f "$BACKEND_DIR/.env" ]; then
+        cp "$PROJECT_DIR/.env" "$BACKEND_DIR/.env"
+    fi
+
+    ########################################
     # VIRTUAL ENVIRONMENT
     ########################################
 
@@ -244,6 +256,17 @@ if [ "$IS_BACKEND" = true ]; then
     ########################################
 
     deactivate
+
+    ########################################
+    # SYSTEMD AUTO-INSTALACIÓN
+    ########################################
+
+    if [ ! -f "/etc/systemd/system/appmottus-api.service" ] && [ -f "$PROJECT_DIR/deploy/ubuntu/appmottus-api.service.example" ]; then
+        echo "Instalando servicio systemd appmottus-api..."
+        sudo cp "$PROJECT_DIR/deploy/ubuntu/appmottus-api.service.example" /etc/systemd/system/appmottus-api.service
+        sudo systemctl daemon-reload
+        sudo systemctl enable appmottus-api
+    fi
 
     ########################################
     # SYSTEMD
@@ -489,6 +512,12 @@ fi
 ############################################
 # NGINX
 ############################################
+
+if [ ! -f "/etc/nginx/sites-available/appmottus.raevsi.cl" ] && [ -f "$PROJECT_DIR/deploy/ubuntu/nginx-appmottus.raevsi.cl.conf.example" ]; then
+    echo "Instalando configuración de virtualhost Nginx..."
+    sudo cp "$PROJECT_DIR/deploy/ubuntu/nginx-appmottus.raevsi.cl.conf.example" /etc/nginx/sites-available/appmottus.raevsi.cl
+    sudo ln -sf /etc/nginx/sites-available/appmottus.raevsi.cl /etc/nginx/sites-enabled/
+fi
 
 echo ""
 echo -e "${YELLOW}>> Verificando Nginx${NC}"
