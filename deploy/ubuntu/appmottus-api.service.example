@@ -1,0 +1,17 @@
+[Unit]
+Description=Mottus Gym API
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/appmottus.raevsi.cl/backend
+EnvironmentFile=-/var/www/appmottus.raevsi.cl/.env
+EnvironmentFile=-/var/www/appmottus.raevsi.cl/backend/.env
+ExecStart=/var/www/appmottus.raevsi.cl/backend/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8006 --proxy-headers
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,120 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap');
+
+:root {
+  /* AI Studio Theme - Military Green (Clarified) & Deep Modern Studio Aesthetic */
+  --md-sys-color-primary: #6E8842;             /* Verde Militar más claro y luminoso */
+  --md-sys-color-primary-light: #89A854;       /* Tono verde militar brillante de acento */
+  --md-sys-color-on-primary: #FFFFFF;
+  --md-sys-color-primary-container: #2A361A;
+  --md-sys-color-on-primary-container: #E2EFC8;
+
+  --md-sys-color-secondary: #8DA858;           /* Oliva suave / Sage brillante */
+  --md-sys-color-on-secondary: #0F1607;
+  --md-sys-color-secondary-container: #232C17;
+  --md-sys-color-on-secondary-container: #DEEAC1;
+
+  --md-sys-color-tertiary: #A5BA9F;            /* Sage tecnológico */
+  --md-sys-color-on-tertiary: #131A12;
+
+  /* Fondos oscuros minimalistas inspirados en Google AI Studio */
+  --md-sys-color-background: #0D110E;          /* Dark Studio Base */
+  --md-sys-color-on-background: #EDF1E8;
+  
+  --md-sys-color-surface: #131914;             /* Surface Studio Container */
+  --md-sys-color-on-surface: #EDF1E8;
+  --md-sys-color-surface-variant: #1B231D;     /* Surface Elevated Studio */
+  --md-sys-color-on-surface-variant: #B0B9AA;
+  --md-sys-color-outline: #384537;
+  --md-sys-color-outline-variant: #232D24;
+
+  --md-sys-color-error: #FFB4AB;
+  --md-sys-color-on-error: #690005;
+
+  /* Typography */
+  --font-family-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-display: 'Outfit', sans-serif;
+
+  /* AI Studio Glow & Elevation Shadows */
+  --md-elevation-1: 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  --md-elevation-2: 0 4px 16px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(110, 136, 66, 0.18);
+  --md-elevation-3: 0 12px 32px rgba(0, 0, 0, 0.55), 0 0 24px rgba(110, 136, 66, 0.2);
+  --studio-glow: 0 0 20px rgba(110, 136, 66, 0.35);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family-sans);
+  background-color: var(--md-sys-color-background);
+  background-image: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(110, 136, 66, 0.15), transparent 70%),
+    radial-gradient(circle at 100% 100%, rgba(137, 168, 84, 0.05), transparent 40%);
+  color: var(--md-sys-color-on-background);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-display);
+  letter-spacing: -0.02em;
+}
+
+/* Glassmorphism & AI Studio Panels */
+.glass-panel {
+  background: rgba(19, 25, 20, 0.78);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(110, 136, 66, 0.18);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+.md-card {
+  background-color: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 18px;
+  box-shadow: var(--md-elevation-1);
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  position: relative;
+}
+
+.md-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  opacity: 0;
+  box-shadow: 0 0 24px rgba(110, 136, 66, 0.22);
+}
+
+.md-card:hover {
+  border-color: rgba(137, 168, 84, 0.45);
+  transform: translateY(-2px);
+  box-shadow: var(--md-elevation-2);
+}
+
+.md-card:hover::after {
+  opacity: 1;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: var(--md-sys-color-background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--md-sys-color-outline-variant);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--md-sys-color-secondary);
+}
