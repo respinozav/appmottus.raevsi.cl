@@ -547,7 +547,12 @@ sudo systemctl reload nginx
 
 echo ""
 echo -e "${YELLOW}>> Configuración de Nginx en sites-enabled:${NC}"
-cat /etc/nginx/sites-enabled/* 2>/dev/null | grep -E "server_name|proxy_pass|root" || true
+for f in /etc/nginx/sites-enabled/*; do
+    if grep -q "appmottus.raevsi.cl" "$f" 2>/dev/null; then
+        echo "=== Archivo Nginx: $f ==="
+        cat "$f"
+    fi
+done
 
 ############################################
 # TIEMPO
