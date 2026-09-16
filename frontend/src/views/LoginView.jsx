@@ -16,9 +16,14 @@ export const LoginView = () => {
     try {
       await login(identifier, password);
     } catch (err) {
-      setError(
-        err.response?.data?.detail || 'Error al iniciar sesión. Verifica tus credenciales.'
-      );
+      const detail = err.response?.data?.detail;
+      if (typeof detail === 'string') {
+        setError(detail);
+      } else if (Array.isArray(detail) && detail.length > 0 && detail[0].msg) {
+        setError(detail[0].msg);
+      } else {
+        setError('Error al iniciar sesión. Verifica tus credenciales.');
+      }
     } finally {
       setLoading(false);
     }

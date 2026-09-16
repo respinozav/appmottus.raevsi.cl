@@ -205,12 +205,32 @@ if [ "$IS_BACKEND" = true ]; then
     # VARIABLES DE ENTORNO (.ENV)
     ########################################
 
-    if [ ! -f "$PROJECT_DIR/.env" ] && [ -f "$PROJECT_DIR/.env.example" ]; then
-        echo "Inicializando .env desde plantilla .env.example..."
-        cp "$PROJECT_DIR/.env.example" "$PROJECT_DIR/.env"
-        cp "$PROJECT_DIR/.env.example" "$BACKEND_DIR/.env"
-    elif [ -f "$PROJECT_DIR/.env" ] && [ ! -f "$BACKEND_DIR/.env" ]; then
-        cp "$PROJECT_DIR/.env" "$BACKEND_DIR/.env"
+    if [ ! -f "$BACKEND_DIR/.env" ] || grep -q "your-rds-host" "$BACKEND_DIR/.env" 2>/dev/null; then
+        echo "Configurando .env de producción para Mottus Gym..."
+        cat << 'EOF' > "$BACKEND_DIR/.env"
+PROJECT_NAME="Mottus Gym API"
+API_V1_STR="/api/v1"
+
+# Database Configuration (Dedicated user 'usr_mottus' on RDS schema 'bdmottus')
+DB_HOST=ls-b12cc9081f17b594187264e8c7fe42119a9bb93f.cgt2s428cp85.us-east-1.rds.amazonaws.com
+DB_PORT=5432
+DB_NAME=postgres
+DB_USER=usr_mottus
+DB_PASSWORD=M0ttus#Gym_2026_SecPass!
+DB_SCHEMA=bdmottus
+
+DATABASE_URL=postgresql+psycopg://usr_mottus:M0ttus%23Gym_2026_SecPass!@ls-b12cc9081f17b594187264e8c7fe42119a9bb93f.cgt2s428cp85.us-east-1.rds.amazonaws.com:5432/postgres
+
+# Security & JWT (Secret key 256 bits)
+SECRET_KEY=mottus_gym_super_secret_jwt_key_2026_military_green_secure
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=43200
+
+# Frontend & Domain
+FRONTEND_URL=https://appmottus.raevsi.cl
+CORS_ORIGINS=["http://localhost:5173","http://localhost:3000","https://appmottus.raevsi.cl"]
+EOF
+        cp "$BACKEND_DIR/.env" "$PROJECT_DIR/.env"
     fi
 
     ########################################
@@ -238,6 +258,15 @@ if [ "$IS_BACKEND" = true ]; then
     echo "Instalando dependencias Python..."
 
     pip install -r requirements.txt
+
+    ########################################
+    # SEED USERS & PASSWORDS
+    ########################################
+
+    if [ -f "seed_passwords.py" ]; then
+        echo "Verificando usuarios y contraseñas de prueba (seed)..."
+        python seed_passwords.py || echo "Aviso: seed_passwords omitido o fallido"
+    fi
 
     ########################################
     # ALEMBIC

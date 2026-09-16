@@ -1,6 +1,7 @@
 from datetime import timedelta
 from typing import Union
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import get_db
@@ -18,10 +19,15 @@ def login_for_access_token(
 ):
     identifier = login_data.identifier.strip().upper()
     identifier_raw = login_data.identifier.strip()
+    cleaned_rut = identifier.replace(".", "")
+    dashed_rut = f"{cleaned_rut[:-1]}-{cleaned_rut[-1]}" if ("-" not in cleaned_rut and len(cleaned_rut) >= 2) else cleaned_rut
 
     # 1. Buscar en User (Admin, Coach)
     user = db.query(User).filter(
-        (User.rut == identifier) | (User.email == identifier_raw)
+        (User.rut == identifier) |
+        (User.rut == cleaned_rut) |
+        (User.rut == dashed_rut) |
+        (func.lower(User.email) == identifier_raw.lower())
     ).first()
 
     target_account = user
@@ -30,7 +36,10 @@ def login_for_access_token(
     # 2. Si no es User, buscar en Student (Alumno)
     if not target_account:
         student = db.query(Student).filter(
-            (Student.rut == identifier) | (Student.email == identifier_raw)
+            (Student.rut == identifier) |
+            (Student.rut == cleaned_rut) |
+            (Student.rut == dashed_rut) |
+            (func.lower(Student.email) == identifier_raw.lower())
         ).first()
         if student:
             target_account = student

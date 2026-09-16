@@ -8,11 +8,31 @@ try:
     if admin_user:
         admin_user.password_hash = get_password_hash("Admin123!")
         print("Updated Admin password to 'Admin123!'")
+    else:
+        admin_user = User(
+            rut="1-9",
+            email="admin@mottus.cl",
+            name="Administrador Mottus",
+            role="admin",
+            password_hash=get_password_hash("Admin123!")
+        )
+        db.add(admin_user)
+        print("Created Admin user 1-9 with password 'Admin123!'")
 
     coach_user = db.query(User).filter(User.rut == "2-7").first()
     if coach_user:
         coach_user.password_hash = get_password_hash("Coach123!")
         print("Updated Coach password to 'Coach123!'")
+    else:
+        coach_user = User(
+            rut="2-7",
+            email="coach@mottus.cl",
+            name="Coach Mottus",
+            role="coach",
+            password_hash=get_password_hash("Coach123!")
+        )
+        db.add(coach_user)
+        print("Created Coach user 2-7 with password 'Coach123!'")
 
     db.commit()
     print("Default seed users ready:")
@@ -20,3 +40,4 @@ try:
     print("Coach: RUT: 2-7 | Pass: Coach123!")
 finally:
     db.close()
+
