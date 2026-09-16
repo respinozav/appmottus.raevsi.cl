@@ -86,7 +86,7 @@ export const LoginView = () => {
             Sistema Inteligente de Entrenamiento & Rutinas
           </p>
           <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block', marginTop: '2px' }}>
-            app.mottus.cl
+            appmottus.raevsi.cl
           </span>
         </div>
 

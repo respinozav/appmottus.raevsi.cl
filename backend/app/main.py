@@ -13,7 +13,7 @@ app = FastAPI(
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Permite desarrollo y dominio app.mottus.cl
+    allow_origins=["*"], # Permite desarrollo y dominio appmottus.raevsi.cl
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,7 +32,7 @@ app.include_router(analytics.router, prefix=f"{settings.API_V1_STR}/analytics", 
 def root():
     return {
         "app": "Mottus Gym API",
-        "domain": "app.mottus.cl",
+        "domain": "appmottus.raevsi.cl",
         "status": "online",
         "docs": f"{settings.API_V1_STR}/docs"
     }

@@ -22,8 +22,8 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 30 # 30 days
     
     # Frontend
-    FRONTEND_URL: str = "https://app.mottus.cl"
-    CORS_ORIGINS: Union[List[str], str] = ["http://localhost:5173", "http://localhost:3000", "https://app.mottus.cl"]
+    FRONTEND_URL: str = "https://appmottus.raevsi.cl"
+    CORS_ORIGINS: Union[List[str], str] = ["http://localhost:5173", "http://localhost:3000", "https://appmottus.raevsi.cl"]
 
     @validator("CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:

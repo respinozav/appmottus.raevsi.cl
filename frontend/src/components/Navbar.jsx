@@ -56,7 +56,7 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
             </span>
           </div>
           <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block', letterSpacing: '0.02em' }}>
-            app.mottus.cl
+            appmottus.raevsi.cl
           </span>
         </div>
       </div>

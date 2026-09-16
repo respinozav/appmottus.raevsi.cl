@@ -1,4 +1,4 @@
--- Script de inicialización de Base de Datos para Mottus Gym (app.mottus.cl)
+-- Script de inicialización de Base de Datos para Mottus Gym (appmottus.raevsi.cl)
 -- Conectarse como superusuario / dbmasteruser a la base 'postgres'
 
 -- 1. Extensiones necesarias para UUIDs y funciones criptográficas
