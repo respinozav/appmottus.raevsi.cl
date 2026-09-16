@@ -278,7 +278,17 @@ if [ "$IS_BACKEND" = true ]; then
 
         sudo systemctl restart "$SERVICE_NAME"
 
+        sleep 2
+
         sudo systemctl --no-pager --full status "$SERVICE_NAME"
+
+        echo ""
+        echo "Verificando respuesta del backend en 127.0.0.1:8006..."
+        curl -s -i http://127.0.0.1:8006/ || true
+
+        echo ""
+        echo "Últimos logs del backend:"
+        sudo journalctl -u "$SERVICE_NAME" -n 25 --no-pager || true
 
     else
 
@@ -528,6 +538,10 @@ echo ""
 echo -e "${YELLOW}>> Recargando Nginx${NC}"
 
 sudo systemctl reload nginx
+
+echo ""
+echo -e "${YELLOW}>> Configuración de Nginx en sites-enabled:${NC}"
+cat /etc/nginx/sites-enabled/* 2>/dev/null | grep -E "server_name|proxy_pass|root" || true
 
 ############################################
 # TIEMPO
