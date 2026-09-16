@@ -29,6 +29,8 @@ app.include_router(metrics.router, prefix=f"{settings.API_V1_STR}/metrics", tags
 app.include_router(analytics.router, prefix=f"{settings.API_V1_STR}/analytics", tags=["Analítica & Cumplimiento"])
 
 @app.get("/")
+@app.get("/api")
+@app.get("/api/")
 def root():
     return {
         "app": "Mottus Gym API",
