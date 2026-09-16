@@ -535,6 +535,46 @@ if [ ! -f "/etc/nginx/sites-available/appmottus.raevsi.cl" ] && [ -f "$PROJECT_D
     sudo ln -sf /etc/nginx/sites-available/appmottus.raevsi.cl /etc/nginx/sites-enabled/
 fi
 
+# Corregir configuración si aún apunta a localhost:3000 (legacy proxy)
+if [ -f "/etc/nginx/sites-available/appmottus.raevsi.cl" ] && grep -q "localhost:3000" "/etc/nginx/sites-available/appmottus.raevsi.cl"; then
+    echo "Actualizando configuración de Nginx para appmottus.raevsi.cl (apuntando a root /var/www/html/ y api 8006)..."
+    sudo tee /etc/nginx/sites-available/appmottus.raevsi.cl > /dev/null << 'EOF'
+server {
+    server_name appmottus.raevsi.cl;
+
+    root /var/www/html/appmottus.raevsi.cl;
+    index index.html;
+
+    location /api {
+        proxy_pass http://127.0.0.1:8006;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/appmottus.raevsi.cl/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/appmottus.raevsi.cl/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+}
+
+server {
+    if ($host = appmottus.raevsi.cl) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+    listen 80;
+    server_name appmottus.raevsi.cl;
+    return 404; # managed by Certbot
+}
+EOF
+fi
+
 echo ""
 echo -e "${YELLOW}>> Verificando Nginx${NC}"
 
