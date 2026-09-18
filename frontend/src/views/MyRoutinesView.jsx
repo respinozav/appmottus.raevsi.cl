@@ -40,15 +40,17 @@ export const MyRoutinesView = () => {
   };
 
   return (
-    <div style={{ padding: '32px 24px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div className="view-container">
       {/* Header */}
-      <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#FFF' }}>
-          Mi Plan de Entrenamiento
-        </h1>
-        <p style={{ fontSize: '14px', color: 'var(--md-sys-color-tertiary)', marginTop: '4px' }}>
-          Revisa tus rutinas programadas, consulta los videos de técnica y marca tu progreso diario
-        </p>
+      <div className="view-header">
+        <div>
+          <h1 className="view-title">
+            Mi Plan de Entrenamiento
+          </h1>
+          <p className="view-subtitle">
+            Revisa tus rutinas programadas, consulta los videos de técnica y marca tu progreso diario
+          </p>
+        </div>
       </div>
 
       {loading ? (
@@ -87,7 +89,7 @@ export const MyRoutinesView = () => {
                 key={routine.id}
                 className="md-card"
                 style={{
-                  padding: '28px',
+                  padding: '24px',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '20px',
@@ -96,7 +98,7 @@ export const MyRoutinesView = () => {
                 }}
               >
                 {/* Header Card */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+                <div className="view-header" style={{ marginBottom: 0 }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                       <Calendar size={16} color="var(--md-sys-color-tertiary)" />
@@ -104,7 +106,7 @@ export const MyRoutinesView = () => {
                         {dateFormatted}
                       </span>
                     </div>
-                    <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#FFF' }}>
+                    <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#FFF' }}>
                       {routine.title}
                     </h2>
                     {routine.coach && (
@@ -115,36 +117,41 @@ export const MyRoutinesView = () => {
                   </div>
 
                   {/* Primary Action Button: Toggle Execution */}
-                  <button
-                    onClick={() => handleToggleExecution(routine)}
-                    disabled={updatingId === routine.id}
-                    style={{
-                      padding: '12px 24px',
-                      borderRadius: '12px',
-                      background: routine.is_executed
-                        ? 'rgba(141, 168, 88, 0.15)'
-                        : 'linear-gradient(135deg, #6E8842 0%, #586E33 100%)',
-                      border: routine.is_executed
-                        ? '1px solid rgba(141, 168, 88, 0.4)'
-                        : '1px solid rgba(137, 168, 84, 0.4)',
-                      color: routine.is_executed ? 'var(--md-sys-color-primary-light)' : '#FFF',
-                      fontWeight: 700,
-                      fontSize: '14px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      boxShadow: routine.is_executed ? 'none' : '0 4px 16px rgba(110, 136, 66, 0.4)',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    <CheckCircle size={18} />
-                    {updatingId === routine.id
-                      ? 'Actualizando...'
-                      : routine.is_executed
-                      ? 'Completada ✔ (Hacer clic para desmarcar)'
-                      : 'Marcar como Ejecutada'}
-                  </button>
+                  <div className="view-actions" style={{ width: 'auto' }}>
+                    <button
+                      onClick={() => handleToggleExecution(routine)}
+                      disabled={updatingId === routine.id}
+                      style={{
+                        padding: '12px 22px',
+                        minHeight: '44px',
+                        borderRadius: '12px',
+                        background: routine.is_executed
+                          ? 'rgba(141, 168, 88, 0.15)'
+                          : 'linear-gradient(135deg, #6E8842 0%, #586E33 100%)',
+                        border: routine.is_executed
+                          ? '1px solid rgba(141, 168, 88, 0.4)'
+                          : '1px solid rgba(137, 168, 84, 0.4)',
+                        color: routine.is_executed ? 'var(--md-sys-color-primary-light)' : '#FFF',
+                        fontWeight: 700,
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: routine.is_executed ? 'none' : '0 4px 16px rgba(110, 136, 66, 0.4)',
+                        transition: 'all 0.2s',
+                        width: '100%'
+                      }}
+                    >
+                      <CheckCircle size={18} />
+                      {updatingId === routine.id
+                        ? 'Actualizando...'
+                        : routine.is_executed
+                        ? 'Completada ✔ (Desmarcar)'
+                        : 'Marcar como Ejecutada'}
+                    </button>
+                  </div>
                 </div>
 
                 {routine.notes && (
@@ -165,12 +172,12 @@ export const MyRoutinesView = () => {
                     Secuencia de Ejercicios ({routine.routine_exercises.length})
                   </h3>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '12px' }}>
                     {routine.routine_exercises.map((item, idx) => (
                       <div
                         key={item.id || idx}
                         style={{
-                          padding: '16px',
+                          padding: '14px',
                           borderRadius: '16px',
                           backgroundColor: 'var(--md-sys-color-surface-variant)',
                           border: '1px solid var(--md-sys-color-outline-variant)',
@@ -189,13 +196,13 @@ export const MyRoutinesView = () => {
                               #{idx + 1}
                             </span>
                           </div>
-                          <h4 style={{ fontSize: '16px', fontWeight: 700, color: '#FFF', marginTop: '4px' }}>
+                          <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#FFF', marginTop: '4px' }}>
                             {item.exercise?.name}
                           </h4>
                         </div>
 
                         {/* Series, Reps & Rest Details */}
-                        <div style={{ display: 'flex', gap: '10px', fontSize: '12px' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '12px' }}>
                           <span style={{ backgroundColor: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: '6px', color: '#FFF', fontWeight: 600 }}>
                             {item.series} Series
                           </span>
@@ -213,6 +220,7 @@ export const MyRoutinesView = () => {
                             onClick={() => setVideoExercise(item.exercise)}
                             style={{
                               width: '100%',
+                              minHeight: '38px',
                               padding: '8px',
                               borderRadius: '10px',
                               backgroundColor: 'rgba(110, 136, 66, 0.2)',

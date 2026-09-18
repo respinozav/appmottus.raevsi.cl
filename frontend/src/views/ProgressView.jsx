@@ -181,49 +181,47 @@ export const ProgressView = () => {
   };
 
   return (
-    <div style={{ padding: '32px 24px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div className="view-container">
       {/* Header */}
-      <div style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '20px',
-        marginBottom: '32px'
-      }}>
+      <div className="view-header">
         <div>
-          <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#FFF' }}>
+          <h1 className="view-title">
             Mi Progreso Corporal
           </h1>
-          <p style={{ fontSize: '14px', color: 'var(--md-sys-color-tertiary)', marginTop: '4px' }}>
+          <p className="view-subtitle">
             Monitorea tu evolución de peso, índice de masa corporal y composición a lo largo del tiempo
           </p>
         </div>
 
-        <button
-          onClick={() => setShowModal(true)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '12px 22px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, #6E8842 0%, #586E33 100%)',
-            color: '#FFF',
-            border: '1px solid rgba(137, 168, 84, 0.4)',
-            fontWeight: 700,
-            fontSize: '14px',
-            cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(110, 136, 66, 0.4)'
-          }}
-        >
-          <Plus size={18} />
-          Registrar Peso / Medición
-        </button>
+        <div className="view-actions">
+          <button
+            onClick={() => setShowModal(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              padding: '12px 22px',
+              minHeight: '44px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #6E8842 0%, #586E33 100%)',
+              color: '#FFF',
+              border: '1px solid rgba(137, 168, 84, 0.4)',
+              fontWeight: 700,
+              fontSize: '14px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(110, 136, 66, 0.4)',
+              width: '100%'
+            }}
+          >
+            <Plus size={18} />
+            Registrar Peso / Medición
+          </button>
+        </div>
       </div>
 
       {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '28px' }}>
+      <div className="responsive-kpi-grid" style={{ marginBottom: '28px' }}>
         {/* Card 1: Peso Actual */}
         <div className="md-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -339,8 +337,8 @@ export const ProgressView = () => {
             No hay mediciones registradas aún. Haz clic en "Registrar Peso / Medición" para comenzar.
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13.5px' }}>
+          <div className="scroll-touch-container">
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13.5px', minWidth: '600px' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--md-sys-color-outline-variant)', textAlign: 'left', color: 'var(--md-sys-color-tertiary)' }}>
                   <th style={{ padding: '12px' }}>Fecha</th>
@@ -405,7 +403,7 @@ export const ProgressView = () => {
       {/* Modal: New Metric */}
       {showModal && (
         <div style={modalBackdropStyle} onClick={() => setShowModal(false)}>
-          <div style={modalBoxStyle} onClick={(e) => e.stopPropagation()}>
+          <div className="responsive-modal-box" style={modalBoxStyle} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#FFF', marginBottom: '6px' }}>
               Registrar Nueva Medición
             </h2>
@@ -428,7 +426,7 @@ export const ProgressView = () => {
             )}
 
             <form onSubmit={handleSaveMetric} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div className="responsive-grid-2col">
                 <div>
                   <label style={labelStyle}>Peso Actual (kg) *</label>
                   <input
@@ -455,7 +453,7 @@ export const ProgressView = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div className="responsive-grid-2col">
                 <div>
                   <label style={labelStyle}>% Grasa Corporal (Opcional)</label>
                   <input

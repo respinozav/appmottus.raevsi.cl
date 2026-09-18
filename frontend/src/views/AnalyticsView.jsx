@@ -42,15 +42,17 @@ export const AnalyticsView = () => {
   }) || [];
 
   return (
-    <div style={{ padding: '32px 24px', maxWidth: '1280px', margin: '0 auto' }}>
+    <div className="view-container">
       {/* Header */}
-      <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#FFF' }}>
-          Historial y Estadísticas de Cumplimiento
-        </h1>
-        <p style={{ fontSize: '14px', color: 'var(--md-sys-color-tertiary)', marginTop: '4px' }}>
-          Monitorea la tasa de ejecución de entrenamientos y la adherencia individual de cada alumno
-        </p>
+      <div className="view-header">
+        <div>
+          <h1 className="view-title">
+            Historial y Estadísticas de Cumplimiento
+          </h1>
+          <p className="view-subtitle">
+            Monitorea la tasa de ejecución de entrenamientos y la adherencia individual de cada alumno
+          </p>
+        </div>
       </div>
 
       {loading ? (
@@ -64,7 +66,7 @@ export const AnalyticsView = () => {
       ) : (
         <>
           {/* KPI Summary Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+          <div className="responsive-kpi-grid" style={{ marginBottom: '32px' }}>
             {/* Tasa Cumplimiento Global */}
             <div className="md-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -186,46 +188,48 @@ export const AnalyticsView = () => {
             </div>
 
             {/* Render Timeline Bars */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(14, 1fr)', gap: '8px', alignItems: 'end', height: '150px', paddingTop: '20px' }}>
-              {stats.timeline.map((point) => {
-                const maxVal = Math.max(...stats.timeline.map(p => Math.max(p.scheduled, p.executed)), 5);
-                const schedHeight = Math.max((point.scheduled / maxVal) * 100, 4);
-                const execHeight = Math.max((point.executed / maxVal) * 100, 4);
-                const dayLabel = new Date(point.date + 'T12:00:00Z').toLocaleDateString('es-CL', { weekday: 'narrow', day: 'numeric' });
+            <div className="scroll-touch-container">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(14, 1fr)', gap: '8px', alignItems: 'end', height: '150px', paddingTop: '20px', minWidth: '500px' }}>
+                {stats.timeline.map((point) => {
+                  const maxVal = Math.max(...stats.timeline.map(p => Math.max(p.scheduled, p.executed)), 5);
+                  const schedHeight = Math.max((point.scheduled / maxVal) * 100, 4);
+                  const execHeight = Math.max((point.executed / maxVal) * 100, 4);
+                  const dayLabel = new Date(point.date + 'T12:00:00Z').toLocaleDateString('es-CL', { weekday: 'narrow', day: 'numeric' });
 
-                return (
-                  <div key={point.date} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end', gap: '6px' }}>
-                    <div style={{ display: 'flex', gap: '3px', alignItems: 'flex-end', height: '100%' }}>
-                      {/* Scheduled Bar */}
-                      <div
-                        title={`Programadas: ${point.scheduled}`}
-                        style={{
-                          width: '12px',
-                          height: `${schedHeight}%`,
-                          backgroundColor: 'rgba(255,255,255,0.15)',
-                          borderRadius: '4px 4px 0 0',
-                          transition: 'height 0.3s'
-                        }}
-                      />
-                      {/* Executed Bar */}
-                      <div
-                        title={`Ejecutadas: ${point.executed}`}
-                        style={{
-                          width: '12px',
-                          height: `${execHeight}%`,
-                          backgroundColor: '#89A854',
-                          borderRadius: '4px 4px 0 0',
-                          boxShadow: point.executed > 0 ? '0 0 8px rgba(137, 168, 84, 0.4)' : 'none',
-                          transition: 'height 0.3s'
-                        }}
-                      />
+                  return (
+                    <div key={point.date} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end', gap: '6px' }}>
+                      <div style={{ display: 'flex', gap: '3px', alignItems: 'flex-end', height: '100%' }}>
+                        {/* Scheduled Bar */}
+                        <div
+                          title={`Programadas: ${point.scheduled}`}
+                          style={{
+                            width: '12px',
+                            height: `${schedHeight}%`,
+                            backgroundColor: 'rgba(255,255,255,0.15)',
+                            borderRadius: '4px 4px 0 0',
+                            transition: 'height 0.3s'
+                          }}
+                        />
+                        {/* Executed Bar */}
+                        <div
+                          title={`Ejecutadas: ${point.executed}`}
+                          style={{
+                            width: '12px',
+                            height: `${execHeight}%`,
+                            backgroundColor: '#89A854',
+                            borderRadius: '4px 4px 0 0',
+                            boxShadow: point.executed > 0 ? '0 0 8px rgba(137, 168, 84, 0.4)' : 'none',
+                            transition: 'height 0.3s'
+                          }}
+                        />
+                      </div>
+                      <span style={{ fontSize: '10px', color: 'var(--md-sys-color-tertiary)', whiteSpace: 'nowrap' }}>
+                        {dayLabel}
+                      </span>
                     </div>
-                    <span style={{ fontSize: '10px', color: 'var(--md-sys-color-tertiary)', whiteSpace: 'nowrap' }}>
-                      {dayLabel}
-                    </span>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -249,7 +253,7 @@ export const AnalyticsView = () => {
               </div>
 
               {/* Search input */}
-              <div style={{ position: 'relative', width: '280px' }}>
+              <div style={{ position: 'relative', width: '100%', maxWidth: '300px' }}>
                 <Search size={16} color="var(--md-sys-color-tertiary)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
                   type="text"
@@ -270,8 +274,8 @@ export const AnalyticsView = () => {
               </div>
             </div>
 
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13.5px' }}>
+            <div className="scroll-touch-container">
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13.5px', minWidth: '650px' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--md-sys-color-outline-variant)', textAlign: 'left', color: 'var(--md-sys-color-tertiary)' }}>
                     <th style={{ padding: '12px' }}>Alumno</th>

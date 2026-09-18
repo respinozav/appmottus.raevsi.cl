@@ -113,27 +113,20 @@ export const ExercisesView = () => {
   };
 
   return (
-    <div style={{ padding: '32px 24px', maxWidth: '1280px', margin: '0 auto' }}>
+    <div className="view-container">
       {/* Header & Actions */}
-      <div style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '20px',
-        marginBottom: '32px'
-      }}>
+      <div className="view-header">
         <div>
-          <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#FFF' }}>
+          <h1 className="view-title">
             Parrilla de Ejercicios
           </h1>
-          <p style={{ fontSize: '14px', color: 'var(--md-sys-color-tertiary)', marginTop: '4px' }}>
+          <p className="view-subtitle">
             Catálogo multimedia con demostraciones en video para los alumnos
           </p>
         </div>
 
         {isCoachOrAdmin && (
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div className="view-actions">
             <button
               onClick={() => setShowCategoryModal(true)}
               style={{
@@ -219,7 +212,7 @@ export const ExercisesView = () => {
         </div>
 
         {/* Category Filter Pills */}
-        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+        <div className="scroll-touch-container" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
           <button
             onClick={() => setSelectedCategory('all')}
             style={{
@@ -279,8 +272,8 @@ export const ExercisesView = () => {
       ) : (
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))',
-          gap: '24px'
+          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+          gap: '20px'
         }}>
           {filteredExercises.map((exercise) => {
             const thumbUrl = getYouTubeThumbnail(exercise.youtube_url);
@@ -428,7 +421,7 @@ export const ExercisesView = () => {
       {/* Modal: Create Exercise */}
       {showCreateModal && (
         <div style={modalBackdropStyle} onClick={() => setShowCreateModal(false)}>
-          <div style={modalBoxStyle} onClick={(e) => e.stopPropagation()}>
+          <div className="responsive-modal-box" style={{ ...modalBoxStyle, width: '100%', maxWidth: '540px' }} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#FFF', marginBottom: '16px' }}>
               Registrar Nuevo Ejercicio
             </h2>
@@ -531,7 +524,7 @@ export const ExercisesView = () => {
       {/* Modal: Create Category */}
       {showCategoryModal && (
         <div style={modalBackdropStyle} onClick={() => setShowCategoryModal(false)}>
-          <div style={modalBoxStyle} onClick={(e) => e.stopPropagation()}>
+          <div className="responsive-modal-box" style={{ ...modalBoxStyle, width: '100%', maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#FFF', marginBottom: '16px' }}>
               Nueva Categoría de Ejercicios
             </h2>

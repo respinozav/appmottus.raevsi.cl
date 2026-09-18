@@ -88,24 +88,24 @@ export const StudentsView = () => {
   };
 
   return (
-    <div style={{ padding: '32px 24px', maxWidth: '1280px', margin: '0 auto' }}>
+    <div className="view-container">
       {/* Header */}
-      <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#FFF' }}>
+      <div style={{ marginBottom: '28px' }}>
+        <h1 className="view-title">
           Gestión de Alumnos & Registro por RUT
         </h1>
-        <p style={{ fontSize: '14px', color: 'var(--md-sys-color-tertiary)', marginTop: '4px' }}>
+        <p className="view-subtitle">
           Ingresa el RUT del alumno para generar su enlace único de activación y asignarle rutinas
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '28px', alignItems: 'start' }}>
+      <div className="responsive-grid-split">
         {/* Left Column: Invite Generator Card */}
         <div style={{
           backgroundColor: 'var(--md-sys-color-surface)',
           borderRadius: '24px',
           border: '1px solid var(--md-sys-color-outline-variant)',
-          padding: '28px',
+          padding: '24px',
           boxShadow: 'var(--md-elevation-1)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '18px' }}>
@@ -280,16 +280,18 @@ export const StudentsView = () => {
                   key={student.id}
                   style={{
                     display: 'flex',
+                    flexWrap: 'wrap',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '16px 20px',
+                    gap: '12px',
+                    padding: '16px',
                     borderRadius: '16px',
                     backgroundColor: 'var(--md-sys-color-surface-variant)',
                     border: '1px solid var(--md-sys-color-outline-variant)'
                   }}
                 >
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ flex: '1 1 200px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '15px', fontWeight: 700, color: '#FFF' }}>
                         {student.name || 'Registro Pendiente'}
                       </span>
@@ -306,7 +308,7 @@ export const StudentsView = () => {
                       </span>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '16px', marginTop: '6px', fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 14px', marginTop: '6px', fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}>
                       <span><strong>RUT:</strong> {student.rut}</span>
                       {student.phone && <span><strong>Tel:</strong> {student.phone}</span>}
                       {student.weight && <span><strong>Peso:</strong> {student.weight} kg</span>}
@@ -375,7 +377,7 @@ export const StudentsView = () => {
       {/* Modal: Coach records evaluation for student */}
       {showMetricModal && selectedStudentForMetric && (
         <div style={modalBackdropStyle} onClick={() => setShowMetricModal(false)}>
-          <div style={modalBoxStyle} onClick={(e) => e.stopPropagation()}>
+          <div className="responsive-modal-box" style={{ ...modalBoxStyle, width: '100%', maxWidth: '520px' }} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#FFF', marginBottom: '4px' }}>
               Evaluación Antropométrica
             </h2>
@@ -398,7 +400,7 @@ export const StudentsView = () => {
             )}
 
             <form onSubmit={handleRecordStudentMetric} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div className="responsive-grid-2col" style={{ gap: '14px' }}>
                 <div>
                   <label style={labelStyle}>Peso en Báscula (kg) *</label>
                   <input
@@ -423,7 +425,7 @@ export const StudentsView = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div className="responsive-grid-2col" style={{ gap: '14px' }}>
                 <div>
                   <label style={labelStyle}>% Grasa Corporal (Opcional)</label>
                   <input

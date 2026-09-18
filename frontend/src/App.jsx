@@ -58,7 +58,7 @@ const AppContent = () => {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar activeTab={effectiveTab} setActiveTab={setActiveTab} />
       
-      <main style={{ flex: 1 }}>
+      <main className="app-main-content">
         {isStudent ? (
           <>
             {effectiveTab === 'my-routines' && <MyRoutinesView />}

@@ -35,26 +35,10 @@ export const LoginView = () => {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '24px',
+    <div className="auth-container" style={{
       background: 'radial-gradient(circle at 50% 20%, #1A2417 0%, #0D110E 75%)'
     }}>
-      <div style={{
-        width: '100%',
-        maxWidth: '430px',
-        backgroundColor: 'rgba(19, 25, 20, 0.85)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderRadius: '24px',
-        border: '1px solid rgba(110, 136, 66, 0.25)',
-        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(110, 136, 66, 0.15)',
-        padding: '40px 32px',
-        position: 'relative'
-      }}>
+      <div className="auth-card">
         {/* Header Branding */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div style={{
@@ -232,7 +216,7 @@ export const LoginView = () => {
             <Sparkles size={14} color="var(--md-sys-color-primary-light)" />
             Acceso Rápido de Prueba:
           </span>
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
               type="button"
               onClick={() => fillQuickAccess('1-9', 'Admin123!')}

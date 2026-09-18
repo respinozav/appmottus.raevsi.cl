@@ -118,3 +118,237 @@ h1, h2, h3, h4, h5, h6 {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--md-sys-color-secondary);
 }
+
+/* ==========================================================================
+   Mobile-First Responsive Layout Utilities
+   ========================================================================== */
+
+.view-container {
+  padding: 32px 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.view-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.view-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #FFF;
+  line-height: 1.2;
+}
+
+.view-subtitle {
+  font-size: 14px;
+  color: var(--md-sys-color-tertiary);
+  margin-top: 4px;
+}
+
+.view-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.app-main-content {
+  flex: 1;
+}
+
+/* Desktop Navigation (Top Bar) */
+.desktop-nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: rgba(19, 25, 20, 0.6);
+  padding: 4px;
+  border-radius: 14px;
+  border: 1px solid rgba(110, 136, 66, 0.15);
+}
+
+/* Mobile Bottom Navigation Bar */
+.mobile-bottom-nav {
+  display: none;
+}
+
+/* Responsive Grid Utilities */
+.responsive-grid-split {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.responsive-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.responsive-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.scroll-touch-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Auth Pages (Login & Register) */
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background-color: rgba(19, 25, 20, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 24px;
+  border: 1px solid rgba(110, 136, 66, 0.25);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(110, 136, 66, 0.15);
+  padding: 40px 32px;
+  position: relative;
+}
+
+/* ==========================================================================
+   Responsive Breakpoints for Smartphones & Tablets
+   ========================================================================== */
+
+@media (max-width: 900px) {
+  .responsive-grid-split {
+    grid-template-columns: 1fr !important;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .view-container {
+    padding: 16px 12px;
+  }
+
+  .view-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .view-title {
+    font-size: 22px;
+  }
+
+  .view-subtitle {
+    font-size: 13px;
+  }
+
+  .view-actions {
+    width: 100%;
+  }
+
+  .view-actions > * {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .desktop-nav-tabs {
+    display: none !important;
+  }
+
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 990;
+    background: rgba(13, 17, 14, 0.94);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid rgba(110, 136, 66, 0.28);
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 12px));
+    justify-content: space-around;
+    align-items: center;
+    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.6);
+  }
+
+  .app-main-content {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 16px)) !important;
+  }
+
+  .responsive-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .md-card {
+    padding: 18px 14px !important;
+    border-radius: 16px;
+  }
+
+  /* Prevent auto-zoom and ensure comfortable touch targets */
+  input, select, textarea, button {
+    touch-action: manipulation;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="datetime-local"],
+  select,
+  textarea {
+    font-size: 16px !important;
+    min-height: 44px;
+  }
+
+  .responsive-modal-box {
+    max-width: 95vw !important;
+    max-height: 90vh !important;
+    padding: 20px 16px !important;
+    border-radius: 20px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .responsive-grid-2col {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .responsive-kpi-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+
+  .view-container {
+    padding: 14px 10px;
+  }
+
+  .auth-container {
+    padding: 16px 12px;
+  }
+
+  .auth-card {
+    padding: 28px 18px !important;
+    border-radius: 20px !important;
+  }
+}
+

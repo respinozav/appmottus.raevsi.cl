@@ -114,45 +114,40 @@ export const RoutinesView = () => {
   };
 
   return (
-    <div style={{ padding: '32px 24px', maxWidth: '1280px', margin: '0 auto' }}>
+    <div className="view-container">
       {/* Header */}
-      <div style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '20px',
-        marginBottom: '32px'
-      }}>
+      <div className="view-header">
         <div>
-          <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#FFF' }}>
+          <h1 className="view-title">
             Rutinas Asignadas por el Coach
           </h1>
-          <p style={{ fontSize: '14px', color: 'var(--md-sys-color-tertiary)', marginTop: '4px' }}>
+          <p className="view-subtitle">
             Planifica sesiones de entrenamiento personalizadas para cada alumno
           </p>
         </div>
 
-        <button
-          onClick={() => setShowModal(true)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '12px 22px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, #6E8842 0%, #586E33 100%)',
-            color: '#FFF',
-            border: '1px solid rgba(137, 168, 84, 0.4)',
-            fontWeight: 700,
-            fontSize: '14px',
-            cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(110, 136, 66, 0.4)'
-          }}
-        >
-          <Plus size={18} />
-          Crear y Asignar Rutina
-        </button>
+        <div className="view-actions">
+          <button
+            onClick={() => setShowModal(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '12px 22px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #6E8842 0%, #586E33 100%)',
+              color: '#FFF',
+              border: '1px solid rgba(137, 168, 84, 0.4)',
+              fontWeight: 700,
+              fontSize: '14px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(110, 136, 66, 0.4)'
+            }}
+          >
+            <Plus size={18} />
+            Crear y Asignar Rutina
+          </button>
+        </div>
       </div>
 
       {/* Routine Cards List */}
@@ -323,7 +318,7 @@ export const RoutinesView = () => {
       {/* Modal: Create & Assign Routine */}
       {showModal && (
         <div style={modalBackdropStyle} onClick={() => setShowModal(false)}>
-          <div style={{ ...modalBoxStyle, maxWidth: '780px', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+          <div className="responsive-modal-box" style={{ ...modalBoxStyle, width: '100%', maxWidth: '780px', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#FFF', marginBottom: '8px' }}>
               Crear & Asignar Nueva Rutina
             </h2>
@@ -346,7 +341,7 @@ export const RoutinesView = () => {
             )}
 
             <form onSubmit={handleCreateRoutine} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="responsive-grid-2col" style={{ gap: '16px' }}>
                 <div>
                   <label style={labelStyle}>Título de la Rutina *</label>
                   <input
@@ -375,7 +370,7 @@ export const RoutinesView = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="responsive-grid-2col" style={{ gap: '16px' }}>
                 <div>
                   <label style={labelStyle}>Fecha y Hora Programada *</label>
                   <input

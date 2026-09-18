@@ -105,23 +105,10 @@ export const RegisterView = ({ token, onRegistered }) => {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '32px 20px',
+    <div className="auth-container" style={{
       background: 'radial-gradient(circle at top, #1E271F 0%, #0E120E 80%)'
     }}>
-      <div style={{
-        width: '100%',
-        maxWidth: '560px',
-        backgroundColor: 'var(--md-sys-color-surface)',
-        borderRadius: '28px',
-        border: '1px solid var(--md-sys-color-outline-variant)',
-        boxShadow: 'var(--md-elevation-3)',
-        padding: '36px 32px'
-      }}>
+      <div className="auth-card" style={{ maxWidth: '560px' }}>
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
           <div style={{
             width: '56px',
@@ -138,21 +125,24 @@ export const RegisterView = ({ token, onRegistered }) => {
           <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#FFF' }}>
             Bienvenido a Mottus Gym
           </h1>
-          <p style={{ fontSize: '14px', color: 'var(--md-sys-color-tertiary)', marginTop: '4px' }}>
-            Completa tus datos iniciales para comenzar tu plan de entrenamiento
+          <p style={{ fontSize: '13.5px', color: 'var(--md-sys-color-tertiary)', marginTop: '4px' }}>
+            Completa tus datos para activar tu cuenta de entrenamiento
           </p>
-          <div style={{
-            display: 'inline-block',
-            marginTop: '12px',
-            padding: '4px 12px',
-            borderRadius: '12px',
-            backgroundColor: 'var(--md-sys-color-secondary-container)',
-            color: 'var(--md-sys-color-on-secondary-container)',
-            fontSize: '12px',
-            fontWeight: 700
-          }}>
-            RUT Asignado: {validUser?.rut}
-          </div>
+          {validUser?.rut && (
+            <div style={{
+              display: 'inline-block',
+              marginTop: '12px',
+              padding: '4px 12px',
+              borderRadius: '12px',
+              backgroundColor: 'rgba(110, 136, 66, 0.2)',
+              border: '1px solid rgba(137, 168, 84, 0.4)',
+              color: 'var(--md-sys-color-primary-light)',
+              fontSize: '12px',
+              fontWeight: 700
+            }}>
+              RUT Asignado: {validUser.rut}
+            </div>
+          )}
         </div>
 
         {error && (
@@ -160,13 +150,13 @@ export const RegisterView = ({ token, onRegistered }) => {
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            backgroundColor: 'rgba(255, 180, 171, 0.12)',
+            backgroundColor: 'rgba(255, 180, 171, 0.15)',
             border: '1px solid rgba(255, 180, 171, 0.3)',
-            borderRadius: '14px',
+            borderRadius: '12px',
             padding: '12px 16px',
-            marginBottom: '20px',
             color: 'var(--md-sys-color-error)',
-            fontSize: '13px'
+            fontSize: '13px',
+            marginBottom: '20px'
           }}>
             <AlertCircle size={18} />
             <span>{error}</span>
@@ -188,7 +178,7 @@ export const RegisterView = ({ token, onRegistered }) => {
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div className="responsive-grid-2col">
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface)', marginBottom: '6px' }}>
                 Sexo *
@@ -219,7 +209,7 @@ export const RegisterView = ({ token, onRegistered }) => {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div className="responsive-grid-2col">
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface)', marginBottom: '6px' }}>
                 Peso Actual (kg) *
