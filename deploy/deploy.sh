@@ -260,6 +260,15 @@ EOF
     pip install -r requirements.txt
 
     ########################################
+    # DB MIGRATIONS (TRUECOACH & BDMOTTUS)
+    ########################################
+
+    if [ -f "migrate_truecoach_features.py" ]; then
+        echo "Ejecutando migración de esquema TrueCoach en PostgreSQL RDS..."
+        python migrate_truecoach_features.py || echo "Aviso: migración TrueCoach omitida o ya aplicada"
+    fi
+
+    ########################################
     # SEED USERS & PASSWORDS
     ########################################
 

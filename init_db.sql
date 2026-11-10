@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS bdmottus.routines (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabla de Detalle Rutina - Ejercicios
+-- Tabla de Detalle Rutina - Ejercicios (Prescripción avanzada TrueCoach)
 CREATE TABLE IF NOT EXISTS bdmottus.routine_exercises (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     routine_id UUID NOT NULL REFERENCES bdmottus.routines(id) ON DELETE CASCADE,
@@ -91,8 +91,45 @@ CREATE TABLE IF NOT EXISTS bdmottus.routine_exercises (
     series INT DEFAULT 3,
     repetitions VARCHAR(50) DEFAULT '12 reps',
     rest_seconds INT DEFAULT 60,
+    order_index INT DEFAULT 1,
+    superset_group VARCHAR(10),
+    target_weight NUMERIC(6, 2),
+    target_rpe NUMERIC(3, 1),
+    tempo VARCHAR(20),
+    coach_notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Tabla de Registro Real Serie por Serie (Workout Logging Alumno)
+CREATE TABLE IF NOT EXISTS bdmottus.exercise_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    routine_exercise_id UUID NOT NULL REFERENCES bdmottus.routine_exercises(id) ON DELETE CASCADE,
+    student_id UUID NOT NULL REFERENCES bdmottus.students(id) ON DELETE CASCADE,
+    set_number INT NOT NULL,
+    actual_weight NUMERIC(6, 2),
+    actual_reps INT,
+    actual_rpe NUMERIC(3, 1),
+    is_completed BOOLEAN NOT NULL DEFAULT FALSE,
+    student_notes TEXT,
+    logged_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_routine_ex_set UNIQUE (routine_exercise_id, set_number)
+);
+
+CREATE INDEX IF NOT EXISTS idx_exercise_logs_routine_ex_set ON bdmottus.exercise_logs (routine_exercise_id, set_number);
+CREATE INDEX IF NOT EXISTS idx_exercise_logs_student_date ON bdmottus.exercise_logs (student_id, logged_at DESC);
+
+-- Tabla de Comentarios de Sesión (Feedback Coach <-> Alumno)
+CREATE TABLE IF NOT EXISTS bdmottus.routine_comments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    routine_id UUID NOT NULL REFERENCES bdmottus.routines(id) ON DELETE CASCADE,
+    author_type VARCHAR(20) NOT NULL CHECK (author_type IN ('coach', 'student')),
+    author_id UUID NOT NULL,
+    author_name VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_routine_comments_routine_created ON bdmottus.routine_comments (routine_id, created_at ASC);
 
 -- Reotorgar permisos a las tablas recién creadas a usr_mottus
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA bdmottus TO usr_mottus;

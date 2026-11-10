@@ -1,12 +1,20 @@
-from typing import List, Dict
+from typing import List, Dict, Optional, Union
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from uuid import UUID
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from app.core.database import get_db
-from app.api.deps import require_coach
-from app.models.models import User, Student, Routine, BodyMetric
-from app.schemas.schemas import CoachComplianceStats, StudentComplianceSummary, ComplianceTimelinePoint
+from app.api.deps import require_coach, get_current_user
+from app.models.models import User, Student, Routine, RoutineExercise, Exercise, Category, BodyMetric, ExerciseLog
+from app.schemas.schemas import (
+    CoachComplianceStats, 
+    StudentComplianceSummary, 
+    ComplianceTimelinePoint,
+    ExerciseStrengthAnalysis,
+    ExerciseHistorySession,
+    ExerciseHistoryPoint
+)
 
 router = APIRouter()
 
@@ -119,3 +127,148 @@ def get_coach_compliance_stats(
         students_summary=students_summary,
         timeline=timeline
     )
+
+@router.get("/exercise-history/{student_id}/{exercise_id}", response_model=ExerciseStrengthAnalysis)
+def get_exercise_strength_analysis(
+    student_id: UUID,
+    exercise_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: Union[User, Student] = Depends(get_current_user)
+):
+    """
+    Análisis de Fuerza y Evolución de 1RM (Fórmula de Epley: Peso * (1 + Reps/30)).
+    Muestra la evolución cronológica de cargas máximas, repeticiones y volumen para un alumno en un ejercicio.
+    """
+    if current_user.role == "user" and current_user.id != student_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="No tienes autorización para ver las métricas de otro alumno."
+        )
+
+    # 1. Obtener información del ejercicio y categoría
+    exercise = db.query(Exercise).options(joinedload(Exercise.category)).filter(Exercise.id == exercise_id).first()
+    if not exercise:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ejercicio no encontrado.")
+
+    # 2. Consultar todos los logs del alumno para este ejercicio
+    logs = (
+        db.query(ExerciseLog, RoutineExercise, Routine)
+        .join(RoutineExercise, ExerciseLog.routine_exercise_id == RoutineExercise.id)
+        .join(Routine, RoutineExercise.routine_id == Routine.id)
+        .filter(
+            ExerciseLog.student_id == student_id,
+            RoutineExercise.exercise_id == exercise_id,
+            ExerciseLog.actual_weight > 0
+        )
+        .order_by(ExerciseLog.logged_at.asc(), ExerciseLog.set_number.asc())
+        .all()
+    )
+
+    all_time_best_1rm = 0.0
+    all_time_max_weight = 0.0
+    total_volume_lifted = 0.0
+
+    # Agrupar por sesión / fecha
+    sessions_dict: Dict[str, Dict] = {}
+
+    for log, re, routine in logs:
+        weight = float(log.actual_weight or 0.0)
+        reps = int(log.actual_reps or 1)
+        rpe = float(log.actual_rpe) if log.actual_rpe else None
+        
+        # Fórmula de Epley: 1RM = Peso * (1 + Reps / 30)
+        estimated_1rm = round(weight * (1.0 + (reps / 30.0)), 2) if reps > 0 else weight
+        volume = round(weight * reps, 2)
+
+        if estimated_1rm > all_time_best_1rm:
+            all_time_best_1rm = estimated_1rm
+        if weight > all_time_max_weight:
+            all_time_max_weight = weight
+        total_volume_lifted += volume
+
+        session_key = str(routine.id)
+        date_str = (log.logged_at or routine.scheduled_at).strftime("%Y-%m-%d")
+
+        if session_key not in sessions_dict:
+            sessions_dict[session_key] = {
+                "date": date_str,
+                "routine_id": routine.id,
+                "routine_title": routine.title or "Sesión de Entrenamiento",
+                "max_weight": 0.0,
+                "max_estimated_1rm": 0.0,
+                "total_volume": 0.0,
+                "sets": []
+            }
+
+        s_entry = sessions_dict[session_key]
+        if weight > s_entry["max_weight"]:
+            s_entry["max_weight"] = weight
+        if estimated_1rm > s_entry["max_estimated_1rm"]:
+            s_entry["max_estimated_1rm"] = estimated_1rm
+        s_entry["total_volume"] = round(s_entry["total_volume"] + volume, 2)
+
+        s_entry["sets"].append(
+            ExerciseHistoryPoint(
+                logged_at=log.logged_at,
+                routine_id=routine.id,
+                routine_title=routine.title or "Sesión",
+                set_number=log.set_number,
+                actual_weight=weight,
+                actual_reps=reps,
+                actual_rpe=rpe,
+                estimated_1rm=estimated_1rm,
+                volume=volume,
+                student_notes=log.student_notes
+            )
+        )
+
+    sessions_list = [
+        ExerciseHistorySession(**s_data)
+        for s_data in sessions_dict.values()
+    ]
+
+    return ExerciseStrengthAnalysis(
+        student_id=student_id,
+        exercise_id=exercise.id,
+        exercise_name=exercise.name,
+        category_name=exercise.category.name if exercise.category else None,
+        all_time_best_1rm=round(all_time_best_1rm, 2),
+        all_time_max_weight=round(all_time_max_weight, 2),
+        total_volume_lifted=round(total_volume_lifted, 2),
+        total_sessions_count=len(sessions_list),
+        sessions=sessions_list
+    )
+
+@router.get("/student-logged-exercises/{student_id}", response_model=List[dict])
+def get_student_logged_exercises(
+    student_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: Union[User, Student] = Depends(get_current_user)
+):
+    """
+    Lista todos los ejercicios en los que el alumno tiene registros de peso/series.
+    Útil para poblar selectores de progreso y gráficas de fuerza.
+    """
+    if current_user.role == "user" and current_user.id != student_id:
+        raise HTTPException(status_code=403, detail="No autorizado.")
+
+    exercises_with_logs = (
+        db.query(Exercise.id, Exercise.name, Category.name.label("category_name"), func.count(ExerciseLog.id).label("logs_count"))
+        .join(RoutineExercise, RoutineExercise.exercise_id == Exercise.id)
+        .join(ExerciseLog, ExerciseLog.routine_exercise_id == RoutineExercise.id)
+        .outerjoin(Category, Exercise.category_id == Category.id)
+        .filter(ExerciseLog.student_id == student_id)
+        .group_by(Exercise.id, Exercise.name, Category.name)
+        .order_by(func.count(ExerciseLog.id).desc())
+        .all()
+    )
+
+    return [
+        {
+            "id": str(e.id),
+            "name": e.name,
+            "category": e.category_name or "General",
+            "logs_count": e.logs_count
+        }
+        for e in exercises_with_logs
+    ]

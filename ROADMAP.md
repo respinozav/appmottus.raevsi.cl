@@ -24,38 +24,28 @@ graph TD
         A6["Flow Tests 100% OK<br/>(10/10 endpoints validados)"]:::done
     end
 
-    %% Nodos En Progreso / Listo para probar
-    subgraph S2["🚀 Fase 2: Entornos Locales Activos"]
-        B1["Backend FastAPI<br/>(:8006/docs)"]:::done
-        B2["Frontend Vite/Vue<br/>(:5173)"]:::done
+    %% Nodos TrueCoach Completados
+    subgraph S2["✅ Fase 2 & 3: Paridad Funcional TrueCoach"]
+        B1["Prescripción Avanzada<br/>(Superseries, Tempo, RPE)"]:::done
+        B2["Workout Logging Serie por Serie<br/>(bdmottus.exercise_logs)"]:::done
+        B3["Feedback Bidireccional<br/>(bdmottus.routine_comments)"]:::done
+        B4["Análisis de Fuerza & 1RM<br/>(Fórmula de Epley en SVG)"]:::done
+        B5["Frontend React 19 Builder & Logger<br/>(Build limpio Vite)"]:::done
     end
 
-    %% Nodos Pendientes para Mañana
-    subgraph S3["🎯 Fase 3: Tareas para Mañana"]
-        C1["Verificación E2E en Navegador<br/>(Registro y Login de Alumno)"]:::inProgress
-        C2["Vistas de Alumno en Frontend<br/>(Dashboard y Perfil)"]:::pending
-        C3["Flujo de Métricas / Evaluaciones<br/>(Coach registra a Alumno)"]:::pending
-        C4["Gestión de Membresías y Asistencia<br/>(Validación de estados activos)"]:::pending
-    end
-
-    %% Fase Futura
-    subgraph S4["🔮 Fase 4: Próximos Hitos"]
-        D1["Módulo de Pagos / Transbank"]:::future
-        D2["Notificaciones & Alertas WhatsApp/Email"]:::future
-        D3["Despliegue a Producción (CI/CD)"]:::future
+    %% Nodos Pendientes
+    subgraph S3["🎯 Fase 4: Próximos Hitos"]
+        C1["Gestión de Membresías y Pagos<br/>(Transbank / Webpay)"]:::pending
+        C2["Control de Asistencia & Check-in<br/>(QR / Acceso Gym)"]:::pending
+        C3["Notificaciones & Alertas WhatsApp/Email"]:::future
+        C4["Despliegue a Producción (CI/CD)"]:::future
     end
 
     %% Relaciones
     A1 & A2 --> A3
     A3 --> A4 --> A5 --> A6
-    A6 --> B1 & B2
-    B1 & B2 --> C1
-    C1 --> C2
-    C2 --> C3
-    C3 --> C4
-    C4 --> D1
-    D1 --> D2
-    D2 --> D3
+    A6 --> B1 & B2 & B3 & B4 & B5
+    B5 --> C1 --> C2 --> C3 --> C4
 ```
 
 ---

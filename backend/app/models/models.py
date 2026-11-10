@@ -128,7 +128,8 @@ class Routine(Base):
 
     student = relationship("Student", foreign_keys=[student_id], back_populates="routines")
     coach = relationship("User", foreign_keys=[coach_id], back_populates="coached_routines")
-    routine_exercises = relationship("RoutineExercise", back_populates="routine", cascade="all, delete-orphan", order_by="RoutineExercise.created_at")
+    routine_exercises = relationship("RoutineExercise", back_populates="routine", cascade="all, delete-orphan", order_by="RoutineExercise.order_index, RoutineExercise.created_at")
+    comments = relationship("RoutineComment", back_populates="routine", cascade="all, delete-orphan", order_by="RoutineComment.created_at.asc()")
 
 class RoutineExercise(Base):
     __tablename__ = "routine_exercises"
@@ -140,10 +141,55 @@ class RoutineExercise(Base):
     series = Column(Integer, default=3)
     repetitions = Column(String(50), default="12 reps")
     rest_seconds = Column(Integer, default=60)
+    order_index = Column(Integer, default=1)
+    superset_group = Column(String(10), nullable=True) # e.g. 'A1', 'A2', 'B1'
+    target_weight = Column(Numeric(6, 2), nullable=True) # e.g. 80.00 kg
+    target_rpe = Column(Numeric(3, 1), nullable=True) # e.g. 8.5
+    tempo = Column(String(20), nullable=True) # e.g. '3-1-1-0'
+    coach_notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     routine = relationship("Routine", back_populates="routine_exercises")
     exercise = relationship("Exercise", back_populates="routine_associations")
+    exercise_logs = relationship("ExerciseLog", back_populates="routine_exercise", cascade="all, delete-orphan", order_by="ExerciseLog.set_number.asc()")
+
+class ExerciseLog(Base):
+    """
+    Registro real serie por serie completado por el alumno o coach (Workout Logging TrueCoach).
+    """
+    __tablename__ = "exercise_logs"
+    __table_args__ = {"schema": "bdmottus"}
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    routine_exercise_id = Column(UUID(as_uuid=True), ForeignKey("bdmottus.routine_exercises.id", ondelete="CASCADE"), nullable=False)
+    student_id = Column(UUID(as_uuid=True), ForeignKey("bdmottus.students.id", ondelete="CASCADE"), nullable=False)
+    set_number = Column(Integer, nullable=False)
+    actual_weight = Column(Numeric(6, 2), nullable=True)
+    actual_reps = Column(Integer, nullable=True)
+    actual_rpe = Column(Numeric(3, 1), nullable=True)
+    is_completed = Column(Boolean, default=False, nullable=False)
+    student_notes = Column(Text, nullable=True)
+    logged_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    routine_exercise = relationship("RoutineExercise", back_populates="exercise_logs")
+    student = relationship("Student", foreign_keys=[student_id])
+
+class RoutineComment(Base):
+    """
+    Comentarios y feedback bidireccional entre Coach y Alumno por sesión de entrenamiento.
+    """
+    __tablename__ = "routine_comments"
+    __table_args__ = {"schema": "bdmottus"}
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    routine_id = Column(UUID(as_uuid=True), ForeignKey("bdmottus.routines.id", ondelete="CASCADE"), nullable=False)
+    author_type = Column(String(20), nullable=False) # 'coach', 'student'
+    author_id = Column(UUID(as_uuid=True), nullable=False)
+    author_name = Column(String(255), nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    routine = relationship("Routine", back_populates="comments")
 
 class BodyMetric(Base):
     __tablename__ = "body_metrics"

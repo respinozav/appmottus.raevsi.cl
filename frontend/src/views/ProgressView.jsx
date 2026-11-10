@@ -4,19 +4,22 @@ import {
   Plus, 
   Scale, 
   Activity, 
-  Calendar, 
-  FileText, 
   Trash2, 
-  Sparkles,
-  ArrowUpRight,
-  ArrowDownRight,
-  Minus
+  ArrowUpRight, 
+  ArrowDownRight, 
+  Minus,
+  Dumbbell,
+  Flame,
+  Award
 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export const ProgressView = () => {
   const { user } = useAuth();
+  const [activeSubTab, setActiveSubTab] = useState('body'); // 'body' | 'strength'
+
+  // Body metrics states
   const [metrics, setMetrics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -30,6 +33,12 @@ export const ProgressView = () => {
   const [muscleMass, setMuscleMass] = useState('');
   const [notes, setNotes] = useState('');
 
+  // Strength / 1RM states
+  const [loggedExercises, setLoggedExercises] = useState([]);
+  const [selectedExerciseId, setSelectedExerciseId] = useState('');
+  const [strengthAnalysis, setStrengthAnalysis] = useState(null);
+  const [loadingStrength, setLoadingStrength] = useState(false);
+
   const fetchMetrics = async () => {
     setLoading(true);
     try {
@@ -42,9 +51,43 @@ export const ProgressView = () => {
     }
   };
 
+  const fetchLoggedExercises = async () => {
+    if (!user?.id) return;
+    try {
+      const res = await api.get(`/analytics/student-logged-exercises/${user.id}`);
+      setLoggedExercises(res.data);
+      if (res.data.length > 0) {
+        setSelectedExerciseId(res.data[0].id);
+        loadStrengthData(res.data[0].id);
+      }
+    } catch (err) {
+      console.error('Error al cargar ejercicios del alumno:', err);
+    }
+  };
+
+  const loadStrengthData = async (exerciseId) => {
+    if (!exerciseId || !user?.id) return;
+    setLoadingStrength(true);
+    try {
+      const res = await api.get(`/analytics/exercise-history/${user.id}/${exerciseId}`);
+      setStrengthAnalysis(res.data);
+    } catch (err) {
+      console.error('Error al cargar datos de fuerza:', err);
+      setStrengthAnalysis(null);
+    } finally {
+      setLoadingStrength(false);
+    }
+  };
+
   useEffect(() => {
     fetchMetrics();
-  }, []);
+    fetchLoggedExercises();
+  }, [user?.id]);
+
+  const handleSelectExercise = (exerciseId) => {
+    setSelectedExerciseId(exerciseId);
+    loadStrengthData(exerciseId);
+  };
 
   const handleSaveMetric = async (e) => {
     e.preventDefault();
@@ -75,6 +118,7 @@ export const ProgressView = () => {
         await api.delete(`/metrics/${id}`);
         fetchMetrics();
       } catch (err) {
+        console.error('Error al eliminar registro:', err);
         alert('Error al eliminar registro');
       }
     }
@@ -97,9 +141,9 @@ export const ProgressView = () => {
     else bmiCategory = { label: 'Obesidad', color: '#E57373' };
   }
 
-  // Generate SVG points for chart
-  const chartData = [...metrics].reverse(); // chronological
-  const renderChart = () => {
+  // Generate SVG points for body chart
+  const chartData = [...metrics].reverse();
+  const renderBodyChart = () => {
     if (chartData.length < 2) {
       return (
         <div style={{ padding: '36px', textAlign: 'center', color: 'var(--md-sys-color-tertiary)', fontSize: '14px' }}>
@@ -123,10 +167,7 @@ export const ProgressView = () => {
       return { x, y, weight: d.weight, date: d.measured_at };
     });
 
-    const pathD = points.reduce((acc, p, idx) => {
-      return idx === 0 ? `M ${p.x},${p.y}` : `${acc} L ${p.x},${p.y}`;
-    }, '');
-
+    const pathD = points.reduce((acc, p, idx) => idx === 0 ? `M ${p.x},${p.y}` : `${acc} L ${p.x},${p.y}`, '');
     const areaD = `${pathD} L ${points[points.length - 1].x},${height - padding} L ${points[0].x},${height - padding} Z`;
 
     return (
@@ -139,39 +180,113 @@ export const ProgressView = () => {
             </linearGradient>
           </defs>
 
-          {/* Grid lines */}
           <line x1={padding} y1={padding} x2={width - padding} y2={padding} stroke="rgba(255,255,255,0.06)" strokeDasharray="4 4" />
           <line x1={padding} y1={height / 2} x2={width - padding} y2={height / 2} stroke="rgba(255,255,255,0.06)" strokeDasharray="4 4" />
           <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="rgba(255,255,255,0.12)" />
 
-          {/* Area fill */}
           <path d={areaD} fill="url(#metricGradient)" />
-
-          {/* Line stroke */}
           <path d={pathD} fill="none" stroke="#89A854" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
 
-          {/* Points & Tooltip Labels */}
           {points.map((p, i) => (
             <g key={i}>
               <circle cx={p.x} cy={p.y} r="5" fill="#DEEAC1" stroke="#4D602E" strokeWidth="2.5" />
-              <text
-                x={p.x}
-                y={p.y - 10}
-                textAnchor="middle"
-                fill="#FFF"
-                fontSize="11"
-                fontWeight="700"
-              >
+              <text x={p.x} y={p.y - 10} textAnchor="middle" fill="#FFF" fontSize="11" fontWeight="700">
                 {p.weight} kg
               </text>
-              <text
-                x={p.x}
-                y={height - 14}
-                textAnchor="middle"
-                fill="var(--md-sys-color-tertiary)"
-                fontSize="10"
-              >
+              <text x={p.x} y={height - 14} textAnchor="middle" fill="var(--md-sys-color-tertiary)" fontSize="10">
                 {new Date(p.date).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}
+              </text>
+            </g>
+          ))}
+        </svg>
+      </div>
+    );
+  };
+
+  // Render SVG 1RM Strength Chart
+  const renderStrengthChart = () => {
+    if (!strengthAnalysis || strengthAnalysis.sessions.length === 0) {
+      return (
+        <div style={{ padding: '36px', textAlign: 'center', color: 'var(--md-sys-color-tertiary)', fontSize: '13px' }}>
+          Aún no tienes series guardadas para este ejercicio. Completa tu rutina en "Mis Rutinas" para ver tu progreso.
+        </div>
+      );
+    }
+
+    const sessions = strengthAnalysis.sessions;
+    if (sessions.length < 2) {
+      return (
+        <div style={{ padding: '28px', textAlign: 'center', color: '#DEEAC1', fontSize: '13.5px' }}>
+          1 sesión completada: Carga Máxima {sessions[0].max_weight}kg | 1RM Estimado: {sessions[0].max_estimated_1rm}kg.
+          Se requieren al menos 2 sesiones para graficar la línea de tendencia.
+        </div>
+      );
+    }
+
+    const allValues = sessions.flatMap(s => [s.max_weight, s.max_estimated_1rm]);
+    const minVal = Math.floor(Math.min(...allValues) * 0.9);
+    const maxVal = Math.ceil(Math.max(...allValues) * 1.1) || 10;
+    const range = maxVal - minVal || 1;
+
+    const width = 640;
+    const height = 180;
+    const padding = 36;
+
+    const points1RM = sessions.map((s, idx) => {
+      const x = padding + (idx / (sessions.length - 1)) * (width - padding * 2);
+      const y = height - padding - ((s.max_estimated_1rm - minVal) / range) * (height - padding * 2);
+      return { x, y, val: s.max_estimated_1rm, date: s.date };
+    });
+
+    const pointsWeight = sessions.map((s, idx) => {
+      const x = padding + (idx / (sessions.length - 1)) * (width - padding * 2);
+      const y = height - padding - ((s.max_weight - minVal) / range) * (height - padding * 2);
+      return { x, y, val: s.max_weight, date: s.date };
+    });
+
+    const path1RM = points1RM.reduce((acc, p, idx) => idx === 0 ? `M ${p.x},${p.y}` : `${acc} L ${p.x},${p.y}`, '');
+    const pathWeight = pointsWeight.reduce((acc, p, idx) => idx === 0 ? `M ${p.x},${p.y}` : `${acc} L ${p.x},${p.y}`, '');
+
+    return (
+      <div style={{ width: '100%', overflowX: 'auto' }}>
+        <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+          {/* Legend */}
+          <g transform={`translate(${padding}, 16)`}>
+            <line x1="0" y1="0" x2="16" y2="0" stroke="#FFB74D" strokeWidth="2.5" />
+            <circle cx="8" cy="0" r="3" fill="#FFB74D" />
+            <text x="22" y="3.5" fill="#FFB74D" fontSize="11" fontWeight="700">1RM Estimado (Epley)</text>
+
+            <line x1="160" y1="0" x2="176" y2="0" stroke="#89A854" strokeWidth="2.5" />
+            <circle cx="168" cy="0" r="3" fill="#89A854" />
+            <text x="182" y="3.5" fill="#DEEAC1" fontSize="11" fontWeight="700">Carga Máxima Real</text>
+          </g>
+
+          {/* Grid lines */}
+          <line x1={padding} y1={padding + 12} x2={width - padding} y2={padding + 12} stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
+          <line x1={padding} y1={height / 2 + 10} x2={width - padding} y2={height / 2 + 10} stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
+          <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="rgba(255,255,255,0.12)" />
+
+          {/* 1RM Line (Orange) */}
+          <path d={path1RM} fill="none" stroke="#FFB74D" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          {points1RM.map((p, i) => (
+            <g key={`1rm-${i}`}>
+              <circle cx={p.x} cy={p.y} r="4" fill="#FFB74D" stroke="#0D110E" strokeWidth="1.5" />
+              <text x={p.x} y={p.y - 7} textAnchor="middle" fill="#FFB74D" fontSize="10" fontWeight="700">
+                {p.val}kg
+              </text>
+            </g>
+          ))}
+
+          {/* Max Weight Line (Green) */}
+          <path d={pathWeight} fill="none" stroke="#89A854" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          {pointsWeight.map((p, i) => (
+            <g key={`w-${i}`}>
+              <circle cx={p.x} cy={p.y} r="4" fill="#DEEAC1" stroke="#4D602E" strokeWidth="1.5" />
+              <text x={p.x} y={p.y + 14} textAnchor="middle" fill="#DEEAC1" fontSize="9.5">
+                {p.val}kg
+              </text>
+              <text x={p.x} y={height - 12} textAnchor="middle" fill="var(--md-sys-color-tertiary)" fontSize="9">
+                {new Date(p.date + 'T12:00:00Z').toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })}
               </text>
             </g>
           ))}
@@ -186,219 +301,463 @@ export const ProgressView = () => {
       <div className="view-header">
         <div>
           <h1 className="view-title">
-            Mi Progreso Corporal
+            Mi Progreso & Rendimiento
           </h1>
           <p className="view-subtitle">
-            Monitorea tu evolución de peso, índice de masa corporal y composición a lo largo del tiempo
+            Monitorea tu composición corporal y analiza tu progresión de fuerza máxima (1RM Epley)
           </p>
         </div>
 
-        <div className="view-actions">
-          <button
-            onClick={() => setShowModal(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              padding: '12px 22px',
-              minHeight: '44px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #6E8842 0%, #586E33 100%)',
-              color: '#FFF',
-              border: '1px solid rgba(137, 168, 84, 0.4)',
-              fontWeight: 700,
-              fontSize: '14px',
-              cursor: 'pointer',
-              boxShadow: '0 4px 16px rgba(110, 136, 66, 0.4)',
-              width: '100%'
-            }}
-          >
-            <Plus size={18} />
-            Registrar Peso / Medición
-          </button>
-        </div>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="responsive-kpi-grid" style={{ marginBottom: '28px' }}>
-        {/* Card 1: Peso Actual */}
-        <div className="md-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-tertiary)' }}>
-              Peso Actual
-            </span>
-            <div style={{ padding: '6px', borderRadius: '8px', backgroundColor: 'rgba(110, 136, 66, 0.2)' }}>
-              <Scale size={18} color="var(--md-sys-color-secondary)" />
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-            <span style={{ fontSize: '32px', fontWeight: 800, color: '#FFF' }}>
-              {currentWeight || '--'}
-            </span>
-            <span style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface-variant)' }}>kg</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
-            {weightDiff > 0 ? (
-              <span style={{ color: '#FFB74D', display: 'flex', alignItems: 'center', fontWeight: 600 }}>
-                <ArrowUpRight size={14} /> +{weightDiff} kg
-              </span>
-            ) : weightDiff < 0 ? (
-              <span style={{ color: '#81C784', display: 'flex', alignItems: 'center', fontWeight: 600 }}>
-                <ArrowDownRight size={14} /> {weightDiff} kg
-              </span>
-            ) : (
-              <span style={{ color: 'var(--md-sys-color-tertiary)', display: 'flex', alignItems: 'center' }}>
-                <Minus size={14} /> Sin variación
-              </span>
-            )}
-            <span style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>desde el inicio</span>
-          </div>
-        </div>
-
-        {/* Card 2: IMC */}
-        <div className="md-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-tertiary)' }}>
-              Índice de Masa Corporal (IMC)
-            </span>
-            <div style={{ padding: '6px', borderRadius: '8px', backgroundColor: 'rgba(110, 136, 66, 0.2)' }}>
-              <Activity size={18} color="var(--md-sys-color-secondary)" />
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-            <span style={{ fontSize: '32px', fontWeight: 800, color: '#FFF' }}>
-              {bmiVal || '--'}
-            </span>
-            <span style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface-variant)' }}>kg/m²</span>
-          </div>
-          <div>
-            <span style={{
-              fontSize: '11px',
-              fontWeight: 700,
-              padding: '2px 8px',
-              borderRadius: '6px',
-              backgroundColor: 'rgba(255, 255, 255, 0.08)',
-              color: bmiCategory.color
-            }}>
-              {bmiCategory.label}
-            </span>
-          </div>
-        </div>
-
-        {/* Card 3: Grasa Corporal */}
-        <div className="md-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-tertiary)' }}>
-              % Grasa Estimada
-            </span>
-            <div style={{ padding: '6px', borderRadius: '8px', backgroundColor: 'rgba(110, 136, 66, 0.2)' }}>
-              <TrendingUp size={18} color="var(--md-sys-color-secondary)" />
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-            <span style={{ fontSize: '32px', fontWeight: 800, color: '#FFF' }}>
-              {latestMetric?.body_fat_percentage || '--'}
-            </span>
-            <span style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface-variant)' }}>%</span>
-          </div>
-          <span style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}>
-            {latestMetric?.muscle_mass ? `Masa magra: ${latestMetric.muscle_mass} kg` : 'Medición antropométrica'}
-          </span>
-        </div>
-      </div>
-
-      {/* Evolution Chart */}
-      <div className="md-card" style={{ padding: '24px', marginBottom: '32px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#FFF', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <TrendingUp size={20} color="var(--md-sys-color-primary-light)" />
-            Evolución de Peso
-          </h3>
-          <span style={{ fontSize: '12px', color: 'var(--md-sys-color-tertiary)' }}>
-            {metrics.length} {metrics.length === 1 ? 'registro' : 'registros'}
-          </span>
-        </div>
-        {renderChart()}
-      </div>
-
-      {/* History Table */}
-      <div className="md-card" style={{ padding: '24px' }}>
-        <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#FFF', marginBottom: '16px' }}>
-          Historial de Mediciones
-        </h3>
-
-        {loading ? (
-          <div style={{ padding: '32px', textAlign: 'center', color: 'var(--md-sys-color-tertiary)' }}>
-            Cargando historial...
-          </div>
-        ) : metrics.length === 0 ? (
-          <div style={{ padding: '32px', textAlign: 'center', color: 'var(--md-sys-color-on-surface-variant)' }}>
-            No hay mediciones registradas aún. Haz clic en "Registrar Peso / Medición" para comenzar.
-          </div>
-        ) : (
-          <div className="scroll-touch-container">
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13.5px', minWidth: '600px' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--md-sys-color-outline-variant)', textAlign: 'left', color: 'var(--md-sys-color-tertiary)' }}>
-                  <th style={{ padding: '12px' }}>Fecha</th>
-                  <th style={{ padding: '12px' }}>Peso (kg)</th>
-                  <th style={{ padding: '12px' }}>Altura (cm)</th>
-                  <th style={{ padding: '12px' }}>IMC</th>
-                  <th style={{ padding: '12px' }}>% Grasa</th>
-                  <th style={{ padding: '12px' }}>Notas</th>
-                  <th style={{ padding: '12px', textAlign: 'right' }}>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {metrics.map((m) => (
-                  <tr key={m.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                    <td style={{ padding: '12px', color: '#FFF', fontWeight: 600 }}>
-                      {new Date(m.measured_at).toLocaleDateString('es-CL', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric'
-                      })}
-                    </td>
-                    <td style={{ padding: '12px', color: 'var(--md-sys-color-secondary)', fontWeight: 700 }}>
-                      {m.weight} kg
-                    </td>
-                    <td style={{ padding: '12px', color: 'var(--md-sys-color-on-surface)' }}>
-                      {m.height || '--'}
-                    </td>
-                    <td style={{ padding: '12px', color: '#FFF' }}>
-                      {m.bmi || '--'}
-                    </td>
-                    <td style={{ padding: '12px', color: 'var(--md-sys-color-on-surface)' }}>
-                      {m.body_fat_percentage ? `${m.body_fat_percentage}%` : '--'}
-                    </td>
-                    <td style={{ padding: '12px', color: 'var(--md-sys-color-on-surface-variant)', fontSize: '12px', maxWidth: '200px' }}>
-                      {m.notes || '-'}
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'right' }}>
-                      <button
-                        onClick={() => handleDeleteMetric(m.id)}
-                        title="Eliminar medición"
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: 'var(--md-sys-color-outline)',
-                          cursor: 'pointer',
-                          padding: '4px'
-                        }}
-                        onMouseOver={(e) => e.currentTarget.style.color = 'var(--md-sys-color-error)'}
-                        onMouseOut={(e) => e.currentTarget.style.color = 'var(--md-sys-color-outline)'}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {activeSubTab === 'body' && (
+          <div className="view-actions">
+            <button
+              onClick={() => setShowModal(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '12px 22px',
+                minHeight: '44px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #6E8842 0%, #586E33 100%)',
+                color: '#FFF',
+                border: '1px solid rgba(137, 168, 84, 0.4)',
+                fontWeight: 700,
+                fontSize: '14px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(110, 136, 66, 0.4)',
+                width: '100%'
+              }}
+            >
+              <Plus size={18} />
+              Registrar Peso / Medición
+            </button>
           </div>
         )}
       </div>
+
+      {/* Sub-Tabs: Composición Corporal vs Mi Fuerza / RMs */}
+      <div style={{
+        display: 'flex',
+        gap: '12px',
+        borderBottom: '1px solid var(--md-sys-color-outline-variant)',
+        paddingBottom: '12px',
+        marginBottom: '28px'
+      }}>
+        <button
+          onClick={() => setActiveSubTab('body')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 20px',
+            borderRadius: '12px',
+            border: 'none',
+            cursor: 'pointer',
+            fontWeight: 700,
+            fontSize: '14px',
+            backgroundColor: activeSubTab === 'body' ? 'var(--md-sys-color-primary)' : 'transparent',
+            color: activeSubTab === 'body' ? '#FFF' : 'var(--md-sys-color-on-surface-variant)',
+            boxShadow: activeSubTab === 'body' ? '0 2px 10px rgba(110, 136, 66, 0.35)' : 'none'
+          }}
+        >
+          <Scale size={18} />
+          Composición Corporal
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('strength')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 20px',
+            borderRadius: '12px',
+            border: 'none',
+            cursor: 'pointer',
+            fontWeight: 700,
+            fontSize: '14px',
+            backgroundColor: activeSubTab === 'strength' ? 'var(--md-sys-color-primary)' : 'transparent',
+            color: activeSubTab === 'strength' ? '#FFF' : 'var(--md-sys-color-on-surface-variant)',
+            boxShadow: activeSubTab === 'strength' ? '0 2px 10px rgba(110, 136, 66, 0.35)' : 'none'
+          }}
+        >
+          <Dumbbell size={18} />
+          Mi Fuerza / RMs (1RM)
+        </button>
+      </div>
+
+      {/* TAB 1: COMPOSICIÓN CORPORAL */}
+      {activeSubTab === 'body' && (
+        <>
+          {/* KPI Cards */}
+          <div className="responsive-kpi-grid" style={{ marginBottom: '28px' }}>
+            {/* Card 1: Peso Actual */}
+            <div className="md-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-tertiary)' }}>
+                  Peso Actual
+                </span>
+                <div style={{ padding: '6px', borderRadius: '8px', backgroundColor: 'rgba(110, 136, 66, 0.2)' }}>
+                  <Scale size={18} color="var(--md-sys-color-secondary)" />
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                <span style={{ fontSize: '32px', fontWeight: 800, color: '#FFF' }}>
+                  {currentWeight || '--'}
+                </span>
+                <span style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface-variant)' }}>kg</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
+                {weightDiff > 0 ? (
+                  <span style={{ color: '#FFB74D', display: 'flex', alignItems: 'center', fontWeight: 600 }}>
+                    <ArrowUpRight size={14} /> +{weightDiff} kg
+                  </span>
+                ) : weightDiff < 0 ? (
+                  <span style={{ color: '#81C784', display: 'flex', alignItems: 'center', fontWeight: 600 }}>
+                    <ArrowDownRight size={14} /> {weightDiff} kg
+                  </span>
+                ) : (
+                  <span style={{ color: 'var(--md-sys-color-tertiary)', display: 'flex', alignItems: 'center' }}>
+                    <Minus size={14} /> Sin variación
+                  </span>
+                )}
+                <span style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>desde el inicio</span>
+              </div>
+            </div>
+
+            {/* Card 2: IMC */}
+            <div className="md-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-tertiary)' }}>
+                  Índice de Masa Corporal (IMC)
+                </span>
+                <div style={{ padding: '6px', borderRadius: '8px', backgroundColor: 'rgba(110, 136, 66, 0.2)' }}>
+                  <Activity size={18} color="var(--md-sys-color-secondary)" />
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                <span style={{ fontSize: '32px', fontWeight: 800, color: '#FFF' }}>
+                  {bmiVal || '--'}
+                </span>
+                <span style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface-variant)' }}>kg/m²</span>
+              </div>
+              <div>
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  padding: '2px 8px',
+                  borderRadius: '6px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                  color: bmiCategory.color
+                }}>
+                  {bmiCategory.label}
+                </span>
+              </div>
+            </div>
+
+            {/* Card 3: Grasa Corporal */}
+            <div className="md-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-tertiary)' }}>
+                  % Grasa Estimada
+                </span>
+                <div style={{ padding: '6px', borderRadius: '8px', backgroundColor: 'rgba(110, 136, 66, 0.2)' }}>
+                  <TrendingUp size={18} color="var(--md-sys-color-secondary)" />
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                <span style={{ fontSize: '32px', fontWeight: 800, color: '#FFF' }}>
+                  {latestMetric?.body_fat_percentage || '--'}
+                </span>
+                <span style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface-variant)' }}>%</span>
+              </div>
+              <span style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                {latestMetric?.muscle_mass ? `Masa magra: ${latestMetric.muscle_mass} kg` : 'Medición antropométrica'}
+              </span>
+            </div>
+          </div>
+
+          {/* Evolution Chart */}
+          <div className="md-card" style={{ padding: '24px', marginBottom: '32px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#FFF', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <TrendingUp size={20} color="var(--md-sys-color-primary-light)" />
+                Evolución de Peso Corporal
+              </h3>
+              <span style={{ fontSize: '12px', color: 'var(--md-sys-color-tertiary)' }}>
+                {metrics.length} {metrics.length === 1 ? 'registro' : 'registros'}
+              </span>
+            </div>
+            {renderBodyChart()}
+          </div>
+
+          {/* History Table */}
+          <div className="md-card" style={{ padding: '24px' }}>
+            <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#FFF', marginBottom: '16px' }}>
+              Historial de Mediciones
+            </h3>
+
+            {loading ? (
+              <div style={{ padding: '32px', textAlign: 'center', color: 'var(--md-sys-color-tertiary)' }}>
+                Cargando historial...
+              </div>
+            ) : metrics.length === 0 ? (
+              <div style={{ padding: '32px', textAlign: 'center', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                No hay mediciones registradas aún. Haz clic en "Registrar Peso / Medición" para comenzar.
+              </div>
+            ) : (
+              <div className="scroll-touch-container">
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13.5px', minWidth: '600px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--md-sys-color-outline-variant)', textAlign: 'left', color: 'var(--md-sys-color-tertiary)' }}>
+                      <th style={{ padding: '12px' }}>Fecha</th>
+                      <th style={{ padding: '12px' }}>Peso (kg)</th>
+                      <th style={{ padding: '12px' }}>Altura (cm)</th>
+                      <th style={{ padding: '12px' }}>IMC</th>
+                      <th style={{ padding: '12px' }}>% Grasa</th>
+                      <th style={{ padding: '12px' }}>Notas</th>
+                      <th style={{ padding: '12px', textAlign: 'right' }}>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {metrics.map((m) => (
+                      <tr key={m.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                        <td style={{ padding: '12px', color: '#FFF', fontWeight: 600 }}>
+                          {new Date(m.measured_at).toLocaleDateString('es-CL', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </td>
+                        <td style={{ padding: '12px', color: 'var(--md-sys-color-secondary)', fontWeight: 700 }}>
+                          {m.weight} kg
+                        </td>
+                        <td style={{ padding: '12px', color: 'var(--md-sys-color-on-surface)' }}>
+                          {m.height || '--'}
+                        </td>
+                        <td style={{ padding: '12px', color: '#FFF' }}>
+                          {m.bmi || '--'}
+                        </td>
+                        <td style={{ padding: '12px', color: 'var(--md-sys-color-on-surface)' }}>
+                          {m.body_fat_percentage ? `${m.body_fat_percentage}%` : '--'}
+                        </td>
+                        <td style={{ padding: '12px', color: 'var(--md-sys-color-on-surface-variant)', fontSize: '12px', maxWidth: '200px' }}>
+                          {m.notes || '-'}
+                        </td>
+                        <td style={{ padding: '12px', textAlign: 'right' }}>
+                          <button
+                            onClick={() => handleDeleteMetric(m.id)}
+                            title="Eliminar medición"
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--md-sys-color-outline)',
+                              cursor: 'pointer',
+                              padding: '4px'
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.color = 'var(--md-sys-color-error)'}
+                            onMouseOut={(e) => e.currentTarget.style.color = 'var(--md-sys-color-outline)'}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* TAB 2: MI FUERZA / 1RM */}
+      {activeSubTab === 'strength' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Exercise Selector */}
+          <div className="md-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '14px' }}>
+            <div>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#FFF' }}>
+                Progresión de Fuerza por Ejercicio
+              </h3>
+              <span style={{ fontSize: '12px', color: 'var(--md-sys-color-tertiary)' }}>
+                Fórmula de Epley para 1RM: Peso x (1 + Reps/30)
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface)' }}>
+                Ejercicio:
+              </label>
+              <select
+                value={selectedExerciseId}
+                onChange={(e) => handleSelectExercise(e.target.value)}
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  backgroundColor: 'var(--md-sys-color-surface-variant)',
+                  border: '1px solid var(--md-sys-color-outline-variant)',
+                  color: '#FFF',
+                  fontSize: '13px',
+                  outline: 'none',
+                  minWidth: '220px'
+                }}
+              >
+                {loggedExercises.length === 0 ? (
+                  <option value="">Sin ejercicios con registros aún</option>
+                ) : (
+                  loggedExercises.map((ex) => (
+                    <option key={ex.id} value={ex.id}>
+                      {ex.name} ({ex.category})
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+          </div>
+
+          {loadingStrength ? (
+            <div style={{ padding: '48px', textAlign: 'center', color: 'var(--md-sys-color-tertiary)' }}>
+              Calculando historial de fuerza y 1RM...
+            </div>
+          ) : strengthAnalysis ? (
+            <>
+              {/* Strength KPIs */}
+              <div className="responsive-kpi-grid">
+                <div className="md-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--md-sys-color-tertiary)', fontWeight: 700, textTransform: 'uppercase' }}>
+                      RÉCORD ESTIMADO (1RM)
+                    </span>
+                    <div style={{ padding: '6px', borderRadius: '8px', backgroundColor: 'rgba(255, 183, 77, 0.2)' }}>
+                      <Flame size={18} color="#FFB74D" />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                    <span style={{ fontSize: '32px', fontWeight: 800, color: '#FFB74D' }}>
+                      {strengthAnalysis.all_time_best_1rm}
+                    </span>
+                    <span style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface-variant)' }}>kg</span>
+                  </div>
+                  <span style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                    Mejor marca teórica lograda
+                  </span>
+                </div>
+
+                <div className="md-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--md-sys-color-tertiary)', fontWeight: 700, textTransform: 'uppercase' }}>
+                      CARGA MÁXIMA REAL
+                    </span>
+                    <div style={{ padding: '6px', borderRadius: '8px', backgroundColor: 'rgba(110, 136, 66, 0.2)' }}>
+                      <Award size={18} color="var(--md-sys-color-secondary)" />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                    <span style={{ fontSize: '32px', fontWeight: 800, color: '#DEEAC1' }}>
+                      {strengthAnalysis.all_time_max_weight}
+                    </span>
+                    <span style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface-variant)' }}>kg</span>
+                  </div>
+                  <span style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                    Mayor peso efectivo levantado
+                  </span>
+                </div>
+
+                <div className="md-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--md-sys-color-tertiary)', fontWeight: 700, textTransform: 'uppercase' }}>
+                      VOLUMEN TOTAL ACUMULADO
+                    </span>
+                    <div style={{ padding: '6px', borderRadius: '8px', backgroundColor: 'rgba(144, 202, 249, 0.2)' }}>
+                      <Activity size={18} color="#90CAF9" />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                    <span style={{ fontSize: '32px', fontWeight: 800, color: '#FFF' }}>
+                      {strengthAnalysis.total_volume_lifted}
+                    </span>
+                    <span style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface-variant)' }}>kg</span>
+                  </div>
+                  <span style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                    En {strengthAnalysis.total_sessions_count} sesiones completadas
+                  </span>
+                </div>
+              </div>
+
+              {/* Chart */}
+              <div className="md-card" style={{ padding: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#FFF' }}>
+                    Curva de Progresión: {strengthAnalysis.exercise_name}
+                  </h3>
+                  <span style={{ fontSize: '12px', color: 'var(--md-sys-color-tertiary)' }}>
+                    {strengthAnalysis.sessions.length} sesiones registradas
+                  </span>
+                </div>
+                {renderStrengthChart()}
+              </div>
+
+              {/* Session breakdown list */}
+              <div className="md-card" style={{ padding: '24px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#FFF', marginBottom: '16px' }}>
+                  Desglose de Series por Sesión
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {strengthAnalysis.sessions.map((sess, sIdx) => (
+                    <div
+                      key={sIdx}
+                      style={{
+                        padding: '14px 18px',
+                        borderRadius: '12px',
+                        backgroundColor: 'var(--md-sys-color-surface-variant)',
+                        border: '1px solid var(--md-sys-color-outline-variant)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <div>
+                          <strong style={{ color: '#FFF', fontSize: '14px' }}>{sess.routine_title}</strong>
+                          <span style={{ fontSize: '12px', color: 'var(--md-sys-color-tertiary)', marginLeft: '10px' }}>
+                            {new Date(sess.date + 'T12:00:00Z').toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric', month: 'short' })}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '12px', color: '#FFB74D', fontWeight: 700 }}>
+                          1RM Máx: {sess.max_estimated_1rm} kg
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {sess.sets.map((setPoint, pIdx) => (
+                          <span
+                            key={pIdx}
+                            style={{
+                              fontSize: '11.5px',
+                              padding: '4px 8px',
+                              borderRadius: '6px',
+                              backgroundColor: 'rgba(255,255,255,0.06)',
+                              color: '#DEEAC1',
+                              border: '1px solid rgba(255,255,255,0.05)'
+                            }}
+                          >
+                            Serie {setPoint.set_number}: {setPoint.actual_weight}kg x {setPoint.actual_reps} reps
+                            {setPoint.actual_rpe ? ` (RPE ${setPoint.actual_rpe})` : ''}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="md-card" style={{ padding: '48px', textAlign: 'center', color: 'var(--md-sys-color-on-surface-variant)' }}>
+              Completa tus entrenamientos serie por serie en "Mis Rutinas" para empezar a generar tu historial de fuerza.
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Modal: New Metric */}
       {showModal && (
@@ -426,7 +785,7 @@ export const ProgressView = () => {
             )}
 
             <form onSubmit={handleSaveMetric} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div className="responsive-grid-2col">
+              <div className="responsive-grid-2col" style={{ gap: '14px' }}>
                 <div>
                   <label style={labelStyle}>Peso Actual (kg) *</label>
                   <input
@@ -441,11 +800,11 @@ export const ProgressView = () => {
                 </div>
 
                 <div>
-                  <label style={labelStyle}>Altura (cm)</label>
+                  <label style={labelStyle}>Estatura (cm)</label>
                   <input
                     type="number"
                     step="0.5"
-                    placeholder="Ej: 175"
+                    placeholder="Ej: 178"
                     value={height}
                     onChange={(e) => setHeight(e.target.value)}
                     style={inputStyle}
@@ -453,13 +812,13 @@ export const ProgressView = () => {
                 </div>
               </div>
 
-              <div className="responsive-grid-2col">
+              <div className="responsive-grid-2col" style={{ gap: '14px' }}>
                 <div>
                   <label style={labelStyle}>% Grasa Corporal (Opcional)</label>
                   <input
                     type="number"
                     step="0.1"
-                    placeholder="Ej: 18.2"
+                    placeholder="Ej: 15.2"
                     value={bodyFat}
                     onChange={(e) => setBodyFat(e.target.value)}
                     style={inputStyle}
@@ -480,17 +839,17 @@ export const ProgressView = () => {
               </div>
 
               <div>
-                <label style={labelStyle}>Notas u Observaciones</label>
+                <label style={labelStyle}>Notas / Sensaciones (Opcional)</label>
                 <input
                   type="text"
-                  placeholder="Ej: Medición matutina en ayunas"
+                  placeholder="Ej: Medición en ayunas"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   style={inputStyle}
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '12px' }}>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
@@ -563,7 +922,7 @@ const modalBackdropStyle = {
 
 const modalBoxStyle = {
   width: '100%',
-  maxWidth: '540px',
+  maxWidth: '520px',
   backgroundColor: 'var(--md-sys-color-surface)',
   borderRadius: '24px',
   border: '1px solid var(--md-sys-color-outline-variant)',
