@@ -6,14 +6,15 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from app.core.database import get_db
 from app.api.deps import require_coach, get_current_user
-from app.models.models import User, Student, Routine, RoutineExercise, Exercise, Category, BodyMetric, ExerciseLog
+from app.models.models import User, Student, Routine, RoutineExercise, Exercise, Category, BodyMetric, ExerciseLog, RoutineComment, HabitLog
 from app.schemas.schemas import (
     CoachComplianceStats, 
     StudentComplianceSummary, 
     ComplianceTimelinePoint,
     ExerciseStrengthAnalysis,
     ExerciseHistorySession,
-    ExerciseHistoryPoint
+    ExerciseHistoryPoint,
+    ActivityFeedItem
 )
 
 router = APIRouter()
@@ -272,3 +273,94 @@ def get_student_logged_exercises(
         }
         for e in exercises_with_logs
     ]
+
+@router.get("/activity-feed", response_model=List[ActivityFeedItem])
+def get_coach_activity_feed(
+    db: Session = Depends(get_db),
+    current_coach: User = Depends(require_coach)
+):
+    """
+    Bandeja de Actividad en Vivo para el Coach (TrueCoach Activity Feed):
+    - Rutinas completadas recientemente por los alumnos (con flag is_reviewed_by_coach).
+    - Comentarios recientes en rutinas dejados por los alumnos.
+    - Hábitos diarios registrados recientemente.
+    """
+    items = []
+
+    # 1. Rutinas completadas (últimas 25)
+    executed_routines = (
+        db.query(Routine)
+        .options(joinedload(Routine.student))
+        .filter(Routine.is_executed == True)
+        .order_by(Routine.executed_at.desc().nullslast(), Routine.scheduled_at.desc())
+        .limit(25)
+        .all()
+    )
+    for r in executed_routines:
+        items.append(ActivityFeedItem(
+            id=f"routine_{r.id}",
+            event_type="routine_completed",
+            title=f"Completó entrenamiento: {r.title}",
+            description=f"Sesión finalizada. {r.notes or ''}".strip(),
+            student_id=r.student_id,
+            student_name=r.student.name if r.student and r.student.name else "Alumno",
+            timestamp=r.executed_at or r.scheduled_at,
+            reference_id=r.id,
+            is_reviewed=r.is_reviewed_by_coach
+        ))
+
+    # 2. Comentarios de alumnos (últimos 20)
+    comments = (
+        db.query(RoutineComment)
+        .join(Routine, Routine.id == RoutineComment.routine_id)
+        .options(joinedload(RoutineComment.routine).joinedload(Routine.student))
+        .filter(RoutineComment.author_type == "student")
+        .order_by(RoutineComment.created_at.desc())
+        .limit(20)
+        .all()
+    )
+    for c in comments:
+        items.append(ActivityFeedItem(
+            id=f"comment_{c.id}",
+            event_type="routine_comment",
+            title=f"Nuevo comentario en '{c.routine.title if c.routine else 'Rutina'}'",
+            description=c.content[:140] + ("..." if len(c.content) > 140 else ""),
+            student_id=c.routine.student_id if c.routine else c.author_id,
+            student_name=c.author_name or "Alumno",
+            timestamp=c.created_at,
+            reference_id=c.routine_id,
+            is_reviewed=None
+        ))
+
+    # 3. Hábitos diarios recientes (últimos 15)
+    habits = (
+        db.query(HabitLog)
+        .options(joinedload(HabitLog.student))
+        .order_by(HabitLog.logged_at.desc())
+        .limit(15)
+        .all()
+    )
+    for h in habits:
+        details = []
+        if h.kcal_consumed: details.append(f"{h.kcal_consumed} kcal")
+        if h.protein_grams: details.append(f"{h.protein_grams}g prot")
+        if h.water_liters: details.append(f"{h.water_liters}L agua")
+        if h.steps: details.append(f"{h.steps} pasos")
+        if h.sleep_hours: details.append(f"{h.sleep_hours}h sueño")
+        desc = " | ".join(details) if details else (h.notes or "Registro completado")
+
+        items.append(ActivityFeedItem(
+            id=f"habit_{h.id}",
+            event_type="habit_logged",
+            title="Registro diario de hábitos",
+            description=desc,
+            student_id=h.student_id,
+            student_name=h.student.name if h.student and h.student.name else "Alumno",
+            timestamp=h.logged_at,
+            reference_id=h.id,
+            is_reviewed=None
+        ))
+
+    # Ordenar por fecha descendente
+    items.sort(key=lambda x: x.timestamp or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+    return items[:40]

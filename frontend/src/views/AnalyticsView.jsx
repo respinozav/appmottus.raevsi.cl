@@ -11,14 +11,26 @@ import {
   Scale, 
   ChevronRight,
   Sparkles,
-  UserCheck
+  UserCheck,
+  Activity,
+  MessageSquare,
+  Flame,
+  Check,
+  RefreshCw
 } from 'lucide-react';
 import api from '../services/api';
 
 export const AnalyticsView = () => {
+  const [activeTab, setActiveTab] = useState('compliance'); // 'compliance' | 'activity'
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchFilter, setSearchFilter] = useState('');
+
+  // Activity Feed States
+  const [feedItems, setFeedItems] = useState([]);
+  const [loadingFeed, setLoadingFeed] = useState(false);
+  const [feedFilter, setFeedFilter] = useState('all'); // 'all' | 'routine_completed' | 'routine_comment' | 'habit_logged'
+  const [reviewingId, setReviewingId] = useState(null);
 
   const fetchStats = async () => {
     setLoading(true);
@@ -32,9 +44,39 @@ export const AnalyticsView = () => {
     }
   };
 
+  const fetchActivityFeed = async () => {
+    setLoadingFeed(true);
+    try {
+      const res = await api.get('/analytics/activity-feed');
+      setFeedItems(res.data || []);
+    } catch (err) {
+      console.error('Error al cargar feed de actividad:', err);
+    } finally {
+      setLoadingFeed(false);
+    }
+  };
+
   useEffect(() => {
     fetchStats();
+    fetchActivityFeed();
   }, []);
+
+  const handleMarkReviewed = async (routineId) => {
+    setReviewingId(routineId);
+    try {
+      await api.patch(`/routines/${routineId}/mark-reviewed`);
+      setFeedItems(prev => prev.map(item => {
+        if (item.reference_id === routineId && item.event_type === 'routine_completed') {
+          return { ...item, is_reviewed: true };
+        }
+        return item;
+      }));
+    } catch (err) {
+      alert('Error al marcar como revisada: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setReviewingId(null);
+    }
+  };
 
   const filteredStudents = stats?.students_summary.filter(s => {
     const q = searchFilter.toLowerCase();
@@ -55,17 +97,99 @@ export const AnalyticsView = () => {
         </div>
       </div>
 
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '64px', color: 'var(--md-sys-color-tertiary)' }}>
-          Generando reporte de cumplimiento...
+      {/* Sub-Tabs: Estadísticas vs Feed de Actividad (TrueCoach Live Feed) */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '12px',
+        marginBottom: '24px'
+      }}>
+        <div style={{
+          display: 'inline-flex',
+          backgroundColor: 'var(--md-sys-color-surface-variant)',
+          borderRadius: '12px',
+          padding: '4px',
+          border: '1px solid var(--md-sys-color-outline-variant)'
+        }}>
+          <button
+            onClick={() => setActiveTab('compliance')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 600,
+              backgroundColor: activeTab === 'compliance' ? 'var(--md-sys-color-primary)' : 'transparent',
+              color: activeTab === 'compliance' ? '#FFF' : 'var(--md-sys-color-on-surface-variant)',
+              transition: 'all 0.2s'
+            }}
+          >
+            <BarChart3 size={16} />
+            Métricas de Cumplimiento
+          </button>
+          <button
+            onClick={() => setActiveTab('activity')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 600,
+              backgroundColor: activeTab === 'activity' ? 'var(--md-sys-color-primary)' : 'transparent',
+              color: activeTab === 'activity' ? '#FFF' : 'var(--md-sys-color-on-surface-variant)',
+              transition: 'all 0.2s'
+            }}
+          >
+            <Activity size={16} />
+            Feed de Actividad en Vivo ({feedItems.length})
+          </button>
         </div>
-      ) : !stats ? (
-        <div style={{ textAlign: 'center', padding: '64px', color: 'var(--md-sys-color-error)' }}>
-          Error al cargar los datos estadísticos.
-        </div>
-      ) : (
-        <>
-          {/* KPI Summary Cards */}
+
+        {activeTab === 'activity' && (
+          <button
+            onClick={fetchActivityFeed}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 14px',
+              borderRadius: '10px',
+              backgroundColor: 'rgba(110, 136, 66, 0.2)',
+              border: '1px solid rgba(137, 168, 84, 0.4)',
+              color: '#DEEAC1',
+              fontSize: '12px',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            <RefreshCw size={14} />
+            Actualizar Feed
+          </button>
+        )}
+      </div>
+
+      {activeTab === 'compliance' ? (
+        loading ? (
+          <div style={{ textAlign: 'center', padding: '64px', color: 'var(--md-sys-color-tertiary)' }}>
+            Generando reporte de cumplimiento...
+          </div>
+        ) : !stats ? (
+          <div style={{ textAlign: 'center', padding: '64px', color: 'var(--md-sys-color-error)' }}>
+            Error al cargar los datos estadísticos.
+          </div>
+        ) : (
+          <>
+            {/* KPI Summary Cards */}
           <div className="responsive-kpi-grid" style={{ marginBottom: '32px' }}>
             {/* Tasa Cumplimiento Global */}
             <div className="md-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -340,6 +464,187 @@ export const AnalyticsView = () => {
             </div>
           </div>
         </>
+        )
+      ) : (
+        /* Live Activity Feed View (TrueCoach Activity Feed) */
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Filter Pills */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {[
+              { id: 'all', label: `Todos (${feedItems.length})` },
+              { id: 'routine_completed', label: 'Rutinas Completadas' },
+              { id: 'routine_comment', label: 'Comentarios de Alumnos' },
+              { id: 'habit_logged', label: 'Registro de Hábitos' }
+            ].map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFeedFilter(f.id)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  border: feedFilter === f.id ? '1px solid rgba(137, 168, 84, 0.6)' : '1px solid rgba(255,255,255,0.1)',
+                  backgroundColor: feedFilter === f.id ? 'rgba(110, 136, 66, 0.3)' : 'rgba(255,255,255,0.03)',
+                  color: feedFilter === f.id ? '#DEEAC1' : 'var(--md-sys-color-on-surface-variant)',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          {loadingFeed ? (
+            <div style={{ textAlign: 'center', padding: '48px', color: 'var(--md-sys-color-tertiary)' }}>
+              Cargando actividad en vivo...
+            </div>
+          ) : feedItems.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '48px 20px',
+              backgroundColor: 'var(--md-sys-color-surface)',
+              borderRadius: '20px',
+              border: '1px solid var(--md-sys-color-outline-variant)'
+            }}>
+              <Activity size={40} color="var(--md-sys-color-secondary)" style={{ margin: '0 auto 12px', opacity: 0.5 }} />
+              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#FFF' }}>Sin actividad reciente</h3>
+              <p style={{ fontSize: '13px', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '4px' }}>
+                Los entrenamientos completados, comentarios de feedback y registros de hábitos de tus alumnos aparecerán aquí en tiempo real.
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {feedItems
+                .filter(item => feedFilter === 'all' || item.event_type === feedFilter)
+                .map(item => {
+                  const dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString('es-CL', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }) : '';
+
+                  const isRoutine = item.event_type === 'routine_completed';
+                  const isComment = item.event_type === 'routine_comment';
+                  const isHabit = item.event_type === 'habit_logged';
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="md-card"
+                      style={{
+                        padding: '16px 20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: '14px',
+                        borderLeft: isRoutine
+                          ? '4px solid #89A854'
+                          : isComment
+                          ? '4px solid #38BDF8'
+                          : '4px solid #F59E0B'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: '1 1 300px' }}>
+                        <div style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '12px',
+                          backgroundColor: isRoutine
+                            ? 'rgba(110, 136, 66, 0.25)'
+                            : isComment
+                            ? 'rgba(56, 189, 248, 0.2)'
+                            : 'rgba(245, 158, 11, 0.2)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}>
+                          {isRoutine && <CheckCircle2 size={20} color="#89A854" />}
+                          {isComment && <MessageSquare size={20} color="#38BDF8" />}
+                          {isHabit && <Flame size={20} color="#F59E0B" />}
+                        </div>
+
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#FFF' }}>
+                              {item.student_name}
+                            </span>
+                            <span style={{
+                              fontSize: '10.5px',
+                              fontWeight: 700,
+                              textTransform: 'uppercase',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              backgroundColor: isRoutine ? 'rgba(110, 136, 66, 0.2)' : isComment ? 'rgba(56, 189, 248, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                              color: isRoutine ? '#DEEAC1' : isComment ? '#BAE6FD' : '#FDE68A'
+                            }}>
+                              {isRoutine ? 'Entrenamiento' : isComment ? 'Comentario' : 'Hábitos'}
+                            </span>
+                            <span style={{ fontSize: '11px', color: 'var(--md-sys-color-tertiary)' }}>
+                              {dateStr}
+                            </span>
+                          </div>
+
+                          <div style={{ fontSize: '13px', color: '#DEEAC1', fontWeight: 600, marginTop: '2px' }}>
+                            {item.title}
+                          </div>
+
+                          {item.description && (
+                            <div style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '2px' }}>
+                              {item.description}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action / Review Status */}
+                      {isRoutine && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          {item.is_reviewed ? (
+                            <span style={{
+                              fontSize: '11.5px',
+                              fontWeight: 700,
+                              color: '#DEEAC1',
+                              backgroundColor: 'rgba(110, 136, 66, 0.25)',
+                              border: '1px solid rgba(137, 168, 84, 0.5)',
+                              padding: '4px 10px',
+                              borderRadius: '8px'
+                            }}>
+                              ✔ Revisada
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleMarkReviewed(item.reference_id)}
+                              disabled={reviewingId === item.reference_id}
+                              style={{
+                                padding: '6px 14px',
+                                borderRadius: '8px',
+                                background: 'linear-gradient(135deg, #6E8842 0%, #4D602E 100%)',
+                                color: '#FFF',
+                                border: '1px solid rgba(137, 168, 84, 0.4)',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px'
+                              }}
+                            >
+                              <Check size={14} />
+                              {reviewingId === item.reference_id ? 'Guardando...' : 'Dar V°B° / Revisar'}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

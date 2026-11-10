@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional, Union
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -25,11 +25,37 @@ from app.schemas.schemas import (
     RoutineCommentOut,
     RoutineTemplateCreate,
     RoutineTemplateOut,
-    RoutineTemplateSaveFromExisting
+    RoutineTemplateSaveFromExisting,
+    ApplyProgramCreate
 )
 from app.api.deps import get_current_user, require_coach
 
 router = APIRouter()
+
+def inject_last_performance_for_routine(db: Session, routine: Routine):
+    """
+    Inyecta en cada RoutineExercise la última marca histórica alcanzada por el alumno en ese ejercicio.
+    """
+    if not routine or not routine.routine_exercises:
+        return
+    for rex in routine.routine_exercises:
+        last_log = (
+            db.query(ExerciseLog)
+            .join(RoutineExercise, RoutineExercise.id == ExerciseLog.routine_exercise_id)
+            .filter(
+                RoutineExercise.exercise_id == rex.exercise_id,
+                ExerciseLog.student_id == routine.student_id,
+                ExerciseLog.is_completed == True,
+                ExerciseLog.actual_weight.isnot(None),
+                ExerciseLog.routine_exercise_id != rex.id
+            )
+            .order_by(ExerciseLog.logged_at.desc())
+            .first()
+        )
+        if last_log and last_log.actual_weight:
+            rex.last_performance = f"{float(last_log.actual_weight):.1f} kg x {last_log.actual_reps or 0} reps"
+        else:
+            rex.last_performance = None
 
 def get_routine_eager_query(db: Session, routine_id: UUID) -> Optional[Routine]:
     """
@@ -38,7 +64,7 @@ def get_routine_eager_query(db: Session, routine_id: UUID) -> Optional[Routine]:
     - Ejercicios asociados con categorías y logs serie por serie
     - Comentarios de feedback
     """
-    return db.query(Routine)\
+    routine = db.query(Routine)\
         .options(
             joinedload(Routine.student),
             joinedload(Routine.coach),
@@ -48,6 +74,9 @@ def get_routine_eager_query(db: Session, routine_id: UUID) -> Optional[Routine]:
         )\
         .filter(Routine.id == routine_id)\
         .first()
+    if routine:
+        inject_last_performance_for_routine(db, routine)
+    return routine
 
 @router.post("/", response_model=RoutineOut)
 def create_and_assign_routine(
@@ -98,6 +127,8 @@ def create_and_assign_routine(
             title=data.title or "Rutina Mottus",
             scheduled_at=scheduled_time,
             notes=data.notes,
+            warmup_notes=data.warmup_notes,
+            cooldown_notes=data.cooldown_notes,
             is_executed=False
         )
         db.add(routine)
@@ -115,7 +146,9 @@ def create_and_assign_routine(
                 target_weight=item.target_weight,
                 target_rpe=item.target_rpe,
                 tempo=item.tempo,
-                coach_notes=item.coach_notes
+                coach_notes=item.coach_notes,
+                block_section=item.block_section or "main",
+                workout_format=item.workout_format or "regular"
             )
             db.add(r_ex)
         return routine
@@ -140,6 +173,10 @@ def format_template_dict(t: RoutineTemplate) -> dict:
         "title": t.title,
         "description": t.description,
         "category_tag": t.category_tag or "General",
+        "warmup_notes": t.warmup_notes,
+        "cooldown_notes": t.cooldown_notes,
+        "week_number": t.week_number or 1,
+        "day_of_week": t.day_of_week or 1,
         "created_at": t.created_at,
         "template_exercises": [
             {
@@ -156,6 +193,8 @@ def format_template_dict(t: RoutineTemplate) -> dict:
                 "target_rpe": float(te.target_rpe) if te.target_rpe is not None else None,
                 "tempo": te.tempo,
                 "coach_notes": te.coach_notes,
+                "block_section": te.block_section or "main",
+                "workout_format": te.workout_format or "regular",
                 "created_at": te.created_at
             }
             for te in t.template_exercises
@@ -192,7 +231,11 @@ def create_routine_template(
         coach_id=current_coach.id,
         title=data.title,
         description=data.description,
-        category_tag=data.category_tag or "General"
+        category_tag=data.category_tag or "General",
+        warmup_notes=data.warmup_notes,
+        cooldown_notes=data.cooldown_notes,
+        week_number=data.week_number or 1,
+        day_of_week=data.day_of_week or 1
     )
     db.add(template)
     db.flush()
@@ -209,7 +252,9 @@ def create_routine_template(
             target_weight=item.target_weight,
             target_rpe=item.target_rpe,
             tempo=item.tempo,
-            coach_notes=item.coach_notes
+            coach_notes=item.coach_notes,
+            block_section=item.block_section or "main",
+            workout_format=item.workout_format or "regular"
         )
         db.add(t_ex)
 
@@ -235,7 +280,11 @@ def save_routine_as_template(
         coach_id=current_coach.id,
         title=data.title or f"Plantilla - {routine.title}",
         description=data.description or routine.notes,
-        category_tag=data.category_tag or "General"
+        category_tag=data.category_tag or "General",
+        warmup_notes=routine.warmup_notes,
+        cooldown_notes=routine.cooldown_notes,
+        week_number=data.week_number or 1,
+        day_of_week=data.day_of_week or 1
     )
     db.add(template)
     db.flush()
@@ -252,7 +301,9 @@ def save_routine_as_template(
             target_weight=r_ex.target_weight,
             target_rpe=r_ex.target_rpe,
             tempo=r_ex.tempo,
-            coach_notes=r_ex.coach_notes
+            coach_notes=r_ex.coach_notes,
+            block_section=r_ex.block_section or "main",
+            workout_format=r_ex.workout_format or "regular"
         )
         db.add(t_ex)
 
@@ -303,10 +354,14 @@ def update_routine(
         routine.scheduled_at = data.scheduled_at
     if data.notes is not None:
         routine.notes = data.notes
+    if data.warmup_notes is not None:
+        routine.warmup_notes = data.warmup_notes
+    if data.cooldown_notes is not None:
+        routine.cooldown_notes = data.cooldown_notes
 
     # Si se actualizan ejercicios
     if data.exercises is not None:
-        # Eliminar anteriores (logs asociados se eliminarán por cascade si aplica o se actualizan)
+        # Eliminar anteriores
         db.query(RoutineExercise).filter(RoutineExercise.routine_id == routine.id).delete()
         for idx, item in enumerate(data.exercises):
             r_ex = RoutineExercise(
@@ -320,7 +375,9 @@ def update_routine(
                 target_weight=item.target_weight,
                 target_rpe=item.target_rpe,
                 tempo=item.tempo,
-                coach_notes=item.coach_notes
+                coach_notes=item.coach_notes,
+                block_section=item.block_section or "main",
+                workout_format=item.workout_format or "regular"
             )
             db.add(r_ex)
 
@@ -346,6 +403,8 @@ def get_my_routines(
         .filter(Routine.student_id == current_user.id)\
         .order_by(Routine.scheduled_at.desc())\
         .all()
+    for r in routines:
+        inject_last_performance_for_routine(db, r)
     return routines
 
 @router.get("/coach-routines", response_model=List[RoutineOut])
@@ -367,7 +426,102 @@ def get_coach_routines(
     if current_coach.role != "admin":
         query = query.filter(Routine.coach_id == current_coach.id)
 
-    return query.order_by(Routine.scheduled_at.desc()).all()
+    routines = query.order_by(Routine.scheduled_at.desc()).all()
+    for r in routines:
+        inject_last_performance_for_routine(db, r)
+    return routines
+
+@router.patch("/{routine_id}/mark-reviewed", response_model=RoutineOut)
+def mark_routine_as_reviewed(
+    routine_id: UUID,
+    db: Session = Depends(get_db),
+    current_coach: User = Depends(require_coach)
+):
+    """
+    Coach marca una sesión de entrenamiento completada como revisada (TrueCoach Coach Review).
+    """
+    routine = db.query(Routine).filter(Routine.id == routine_id).first()
+    if not routine:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rutina no encontrada.")
+
+    routine.is_reviewed_by_coach = True
+    routine.coach_reviewed_at = datetime.utcnow()
+    db.commit()
+    return get_routine_eager_query(db, routine.id)
+
+@router.post("/templates/apply-program", response_model=List[RoutineOut])
+def apply_program_mesocycle(
+    data: ApplyProgramCreate,
+    db: Session = Depends(get_db),
+    current_coach: User = Depends(require_coach)
+):
+    """
+    Aplica un programa multi-semana de plantillas a un alumno (Mesociclos Reutilizables TrueCoach).
+    Calcula las fechas según la fecha de inicio del programa, week_number y day_of_week.
+    """
+    student = db.query(Student).filter(Student.id == data.student_id).first()
+    if not student:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alumno no encontrado.")
+
+    templates = (
+        db.query(RoutineTemplate)
+        .options(joinedload(RoutineTemplate.template_exercises).joinedload(RoutineTemplateExercise.exercise))
+        .filter(RoutineTemplate.id.in_(data.template_ids))
+        .all()
+    )
+    if not templates:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No se encontraron plantillas válidas.")
+
+    base_monday = data.start_date - timedelta(days=(data.start_date.isoweekday() - 1))
+
+    created_routine_ids = []
+    for t in templates:
+        w_offset = (t.week_number - 1) if t.week_number else 0
+        d_offset = (t.day_of_week - 1) if t.day_of_week else 0
+        scheduled_day = base_monday + timedelta(days=(w_offset * 7 + d_offset))
+        scheduled_dt = datetime.combine(scheduled_day, datetime.min.time()).replace(hour=9, minute=0)
+
+        routine = Routine(
+            student_id=student.id,
+            coach_id=current_coach.id,
+            title=f"S{t.week_number or 1}D{t.day_of_week or 1}: {t.title}",
+            scheduled_at=scheduled_dt,
+            notes=t.description,
+            warmup_notes=t.warmup_notes,
+            cooldown_notes=t.cooldown_notes,
+            is_executed=False
+        )
+        db.add(routine)
+        db.flush()
+
+        for idx, te in enumerate(t.template_exercises):
+            rex = RoutineExercise(
+                routine_id=routine.id,
+                exercise_id=te.exercise_id,
+                series=te.series,
+                repetitions=te.repetitions,
+                rest_seconds=te.rest_seconds,
+                order_index=te.order_index or (idx + 1),
+                superset_group=te.superset_group,
+                target_weight=te.target_weight,
+                target_rpe=te.target_rpe,
+                tempo=te.tempo,
+                coach_notes=te.coach_notes,
+                block_section=te.block_section or "main",
+                workout_format=te.workout_format or "regular"
+            )
+            db.add(rex)
+
+        created_routine_ids.append(routine.id)
+
+    db.commit()
+
+    results = []
+    for rid in created_routine_ids:
+        r_out = get_routine_eager_query(db, rid)
+        if r_out:
+            results.append(r_out)
+    return results
 
 @router.get("/{routine_id}", response_model=RoutineOut)
 def get_routine_detail(

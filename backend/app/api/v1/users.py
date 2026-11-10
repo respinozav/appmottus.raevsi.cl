@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import get_password_hash
-from app.models.models import User, Student
+from app.models.models import User, Student, DirectMessage
 from app.schemas.schemas import (
     StudentCreateByCoach,
     StudentCompleteRegistration,
@@ -14,6 +14,9 @@ from app.schemas.schemas import (
     StudentWithTokenOut,
     StudentCoachSettingsUpdate,
     UserOut,
+    DirectMessageCreate,
+    DirectMessageOut,
+    UnreadMessagesCountOut
 )
 from app.api.deps import get_current_user, require_coach, require_admin
 
@@ -170,9 +173,140 @@ def update_student_coach_settings(
     if data.daily_water_liters_target is not None:
         student.daily_water_liters_target = data.daily_water_liters_target
 
+    # Ficha Clínica (TrueCoach Phase 3)
+    if data.injuries_notes is not None:
+        student.injuries_notes = data.injuries_notes
+    if data.fitness_goals is not None:
+        student.fitness_goals = data.fitness_goals
+    if data.equipment_available is not None:
+        student.equipment_available = data.equipment_available
+    if data.private_coach_notes is not None:
+        student.private_coach_notes = data.private_coach_notes
+
     db.commit()
     db.refresh(student)
     return student
+
+# Direct Messaging 1 to 1 (TrueCoach Direct Inbox)
+@router.get("/messages/{student_id}", response_model=List[DirectMessageOut])
+def get_conversation_messages(
+    student_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: Union[User, Student] = Depends(get_current_user)
+):
+    """
+    Obtiene el historial de chat 1 a 1 entre el Coach y el Alumno.
+    Marca automáticamente como leídos los mensajes dirigidos al usuario actual.
+    """
+    is_student = current_user.role == "user"
+    if is_student and current_user.id != student_id:
+        raise HTTPException(status_code=403, detail="No puedes ver los mensajes de otro alumno.")
+
+    messages = (
+        db.query(DirectMessage)
+        .filter(DirectMessage.student_id == student_id)
+        .order_by(DirectMessage.created_at.asc())
+        .all()
+    )
+
+    # Marcar leídos los mensajes entrantes
+    # Si el que lee es student, marca los que envió coach
+    # Si el que lee es coach, marca los que envió student
+    target_role_to_mark = "coach" if is_student else "student"
+    needs_commit = False
+    for m in messages:
+        if m.sender_role == target_role_to_mark and not m.is_read:
+            m.is_read = True
+            needs_commit = True
+
+    if needs_commit:
+        db.commit()
+
+    return messages
+
+@router.post("/messages/{student_id}", response_model=DirectMessageOut)
+def send_direct_message(
+    student_id: UUID,
+    payload: DirectMessageCreate,
+    db: Session = Depends(get_db),
+    current_user: Union[User, Student] = Depends(get_current_user)
+):
+    """
+    Envía un mensaje directo 1 a 1 en el canal privado de la conversación.
+    """
+    if not payload.content or not payload.content.strip():
+        raise HTTPException(status_code=400, detail="El contenido del mensaje no puede estar vacío.")
+
+    is_student = current_user.role == "user"
+    if is_student and current_user.id != student_id:
+        raise HTTPException(status_code=403, detail="No puedes enviar mensajes a nombre de otro alumno.")
+
+    # Si es student, determinar el coach_id (el primer coach del gimnasio o el que le asignó su última rutina)
+    if is_student:
+        sender_role = "student"
+        student = db.query(Student).filter(Student.id == student_id).first()
+        if not student:
+            raise HTTPException(status_code=404, detail="Alumno no encontrado.")
+
+        # Buscar coach de su última rutina o el primer coach/admin registrado
+        coach_id = None
+        if student.routines:
+            coach_id = student.routines[0].coach_id
+        if not coach_id:
+            first_coach = db.query(User).first()
+            if not first_coach:
+                raise HTTPException(status_code=400, detail="No hay ningún coach registrado en el gimnasio.")
+            coach_id = first_coach.id
+    else:
+        sender_role = "coach"
+        coach_id = current_user.id
+        student = db.query(Student).filter(Student.id == student_id).first()
+        if not student:
+            raise HTTPException(status_code=404, detail="Alumno no encontrado.")
+
+    msg = DirectMessage(
+        student_id=student_id,
+        coach_id=coach_id,
+        sender_role=sender_role,
+        content=payload.content.strip(),
+        is_read=False
+    )
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+    return msg
+
+@router.get("/messages-unread-count", response_model=UnreadMessagesCountOut)
+def get_unread_messages_count(
+    db: Session = Depends(get_db),
+    current_user: Union[User, Student] = Depends(get_current_user)
+):
+    """
+    Devuelve la cantidad total de mensajes no leídos para el usuario activo (para el badge del Navbar).
+    """
+    is_student = current_user.role == "user"
+    if is_student:
+        # Alumno: cuenta mensajes de 'coach' dirigidos a él que estén unread
+        count = (
+            db.query(DirectMessage)
+            .filter(
+                DirectMessage.student_id == current_user.id,
+                DirectMessage.sender_role == "coach",
+                DirectMessage.is_read == False
+            )
+            .count()
+        )
+    else:
+        # Coach: cuenta mensajes de 'student' que estén unread
+        count = (
+            db.query(DirectMessage)
+            .filter(
+                DirectMessage.sender_role == "student",
+                DirectMessage.is_read == False
+            )
+            .count()
+        )
+    return {"unread_count": count}
 
 @router.get("/", response_model=List[UserOut])
 def list_all_users(

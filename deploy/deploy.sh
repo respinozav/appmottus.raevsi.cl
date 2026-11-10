@@ -273,6 +273,11 @@ EOF
         python migrate_truecoach_phase2.py || echo "Aviso: migración TrueCoach Fase 2 omitida o ya aplicada"
     fi
 
+    if [ -f "migrate_truecoach_phase3.py" ]; then
+        echo "Ejecutando migración de esquema TrueCoach Fase 3 (Bloques, Ficha Clínica, Feed, Perímetros, Mensajería)..."
+        python migrate_truecoach_phase3.py || echo "Aviso: migración TrueCoach Fase 3 omitida o ya aplicada"
+    fi
+
     ########################################
     # SEED USERS & PASSWORDS
     ########################################

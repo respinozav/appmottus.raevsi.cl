@@ -70,6 +70,13 @@ class StudentOut(BaseModel):
     daily_protein_target: Optional[int] = None
     daily_steps_target: Optional[int] = None
     daily_water_liters_target: Optional[float] = None
+    
+    # Ficha Clínica (TrueCoach Phase 3)
+    injuries_notes: Optional[str] = None
+    fitness_goals: Optional[str] = None
+    equipment_available: Optional[str] = None
+    private_coach_notes: Optional[str] = None
+
     created_at: Optional[datetime] = None
 
     class Config:
@@ -83,6 +90,12 @@ class StudentCoachSettingsUpdate(BaseModel):
     daily_protein_target: Optional[int] = None
     daily_steps_target: Optional[int] = None
     daily_water_liters_target: Optional[float] = None
+    
+    # Ficha Clínica (TrueCoach Phase 3)
+    injuries_notes: Optional[str] = None
+    fitness_goals: Optional[str] = None
+    equipment_available: Optional[str] = None
+    private_coach_notes: Optional[str] = None
 
 class UserProfileUpdate(BaseModel):
     name: Optional[str] = None
@@ -192,6 +205,8 @@ class RoutineExerciseDetail(BaseModel):
     target_rpe: Optional[float] = None
     tempo: Optional[str] = None
     coach_notes: Optional[str] = None
+    block_section: Optional[str] = "main" # 'warmup', 'main', 'cooldown'
+    workout_format: Optional[str] = "regular" # 'regular', 'superset', 'circuit', 'amrap', 'emom'
 
 class RoutineExerciseOut(BaseModel):
     id: UUID
@@ -205,6 +220,9 @@ class RoutineExerciseOut(BaseModel):
     target_rpe: Optional[float] = None
     tempo: Optional[str] = None
     coach_notes: Optional[str] = None
+    block_section: Optional[str] = "main"
+    workout_format: Optional[str] = "regular"
+    last_performance: Optional[str] = None # 'Última: 80 kg x 10 reps (hace 4 días)'
     exercise: Optional[ExerciseOut] = None
     exercise_logs: List[ExerciseLogOut] = []
 
@@ -218,6 +236,8 @@ class RoutineCreate(BaseModel):
     title: Optional[str] = "Rutina Mottus"
     scheduled_at: datetime
     notes: Optional[str] = None
+    warmup_notes: Optional[str] = None
+    cooldown_notes: Optional[str] = None
     exercises: List[RoutineExerciseDetail]
     duplicate_to_dates: Optional[List[datetime]] = None # Programación periódica TrueCoach
 
@@ -229,6 +249,8 @@ class RoutineUpdate(BaseModel):
     title: Optional[str] = None
     scheduled_at: Optional[datetime] = None
     notes: Optional[str] = None
+    warmup_notes: Optional[str] = None
+    cooldown_notes: Optional[str] = None
     exercises: Optional[List[RoutineExerciseDetail]] = None
 
 class RoutineOut(BaseModel):
@@ -240,6 +262,10 @@ class RoutineOut(BaseModel):
     is_executed: bool
     executed_at: Optional[datetime] = None
     notes: Optional[str] = None
+    warmup_notes: Optional[str] = None
+    cooldown_notes: Optional[str] = None
+    is_reviewed_by_coach: bool = False
+    coach_reviewed_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
     student: Optional[StudentOut] = None
     user: Optional[StudentOut] = Field(default=None, alias="student") # Compatibilidad frontend
@@ -261,6 +287,17 @@ class BodyMetricBase(BaseModel):
     body_fat_percentage: Optional[float] = None
     muscle_mass: Optional[float] = None
     notes: Optional[str] = None
+    
+    # Perímetros Anatómicos y Fotos de Progreso (TrueCoach Phase 3)
+    waist_cm: Optional[float] = None
+    hip_cm: Optional[float] = None
+    chest_cm: Optional[float] = None
+    arm_cm: Optional[float] = None
+    thigh_cm: Optional[float] = None
+    photo_front_url: Optional[str] = None
+    photo_side_url: Optional[str] = None
+    photo_back_url: Optional[str] = None
+
     measured_at: Optional[datetime] = None
 
 class BodyMetricCreate(BodyMetricBase):
@@ -338,7 +375,7 @@ class ExerciseStrengthAnalysis(BaseModel):
     total_sessions_count: int
     sessions: List[ExerciseHistorySession]
 
-# Workout Templates (TrueCoach Phase 2)
+# Workout Templates (TrueCoach Phase 2 & 3)
 class RoutineTemplateExerciseCreate(BaseModel):
     exercise_id: UUID
     order_index: Optional[int] = 1
@@ -350,6 +387,8 @@ class RoutineTemplateExerciseCreate(BaseModel):
     target_rpe: Optional[float] = None
     tempo: Optional[str] = None
     coach_notes: Optional[str] = None
+    block_section: Optional[str] = "main"
+    workout_format: Optional[str] = "regular"
 
 class RoutineTemplateExerciseOut(BaseModel):
     id: UUID
@@ -365,6 +404,8 @@ class RoutineTemplateExerciseOut(BaseModel):
     target_rpe: Optional[float] = None
     tempo: Optional[str] = None
     coach_notes: Optional[str] = None
+    block_section: Optional[str] = "main"
+    workout_format: Optional[str] = "regular"
     created_at: Optional[datetime] = None
 
     class Config:
@@ -374,12 +415,18 @@ class RoutineTemplateCreate(BaseModel):
     title: str
     description: Optional[str] = None
     category_tag: Optional[str] = "General"
+    warmup_notes: Optional[str] = None
+    cooldown_notes: Optional[str] = None
+    week_number: Optional[int] = 1
+    day_of_week: Optional[int] = 1
     exercises: List[RoutineTemplateExerciseCreate] = []
 
 class RoutineTemplateSaveFromExisting(BaseModel):
     title: str
     description: Optional[str] = None
     category_tag: Optional[str] = "General"
+    week_number: Optional[int] = 1
+    day_of_week: Optional[int] = 1
 
 class RoutineTemplateOut(BaseModel):
     id: UUID
@@ -388,6 +435,10 @@ class RoutineTemplateOut(BaseModel):
     title: str
     description: Optional[str] = None
     category_tag: str
+    warmup_notes: Optional[str] = None
+    cooldown_notes: Optional[str] = None
+    week_number: int = 1
+    day_of_week: int = 1
     created_at: Optional[datetime] = None
     template_exercises: List[RoutineTemplateExerciseOut] = []
 
@@ -418,3 +469,40 @@ class HabitLogOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+# Program Application (Mesocycle multi-week TrueCoach)
+class ApplyProgramCreate(BaseModel):
+    student_id: UUID
+    template_ids: List[UUID]
+    start_date: date
+
+# Activity Feed (TrueCoach Live Activity)
+class ActivityFeedItem(BaseModel):
+    id: str
+    event_type: str # 'routine_completed', 'routine_comment', 'habit_logged'
+    title: str
+    description: str
+    student_id: UUID
+    student_name: str
+    timestamp: datetime
+    reference_id: UUID
+    is_reviewed: Optional[bool] = None
+
+# Direct Messaging 1 to 1 (TrueCoach Direct Inbox)
+class DirectMessageCreate(BaseModel):
+    content: str
+
+class DirectMessageOut(BaseModel):
+    id: UUID
+    student_id: UUID
+    coach_id: UUID
+    sender_role: str # 'coach', 'student'
+    content: str
+    is_read: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class UnreadMessagesCountOut(BaseModel):
+    unread_count: int

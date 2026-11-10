@@ -53,11 +53,22 @@ export const RoutinesView = () => {
   const [selectedStudent, setSelectedStudent] = useState('');
   const [scheduledAt, setScheduledAt] = useState('');
   const [notes, setNotes] = useState('');
+  const [warmupNotes, setWarmupNotes] = useState('');
+  const [cooldownNotes, setCooldownNotes] = useState('');
   const [selectedExercises, setSelectedExercises] = useState([]); // Array of prescription objects
   const [duplicateDates, setDuplicateDates] = useState([]); // Array of ISO strings
   const [extraDateInput, setExtraDateInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+
+  // Program / Mesocycle Application (TrueCoach Multi-week Program)
+  const [showApplyProgramModal, setShowApplyProgramModal] = useState(false);
+  const [programStudentId, setProgramStudentId] = useState('');
+  const [programStartDate, setProgramStartDate] = useState('');
+  const [selectedProgramTemplateIds, setSelectedProgramTemplateIds] = useState([]);
+  const [applyingProgram, setApplyingProgram] = useState(false);
+  const [programMsg, setProgramMsg] = useState({ type: '', text: '' });
+  const [markingReviewed, setMarkingReviewed] = useState(false);
 
   // Video Preview Modal
   const [videoExercise, setVideoExercise] = useState(null);
@@ -235,7 +246,9 @@ export const RoutinesView = () => {
           target_weight: '',
           target_rpe: '',
           tempo: '3-0-1-0',
-          coach_notes: ''
+          coach_notes: '',
+          block_section: 'main',
+          workout_format: 'regular'
         }
       ]);
     }
@@ -261,6 +274,50 @@ export const RoutinesView = () => {
     setDuplicateDates(duplicateDates.filter(d => d !== dateToRemove));
   };
 
+  const handleMarkReviewed = async (routineId) => {
+    setMarkingReviewed(true);
+    try {
+      const res = await api.patch(`/routines/${routineId}/mark-reviewed`);
+      setRoutines(prev => prev.map(r => r.id === routineId ? res.data : r));
+      if (inspectRoutine?.id === routineId) {
+        setInspectRoutine(res.data);
+      }
+    } catch (err) {
+      alert('Error al marcar como revisada: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setMarkingReviewed(false);
+    }
+  };
+
+  const handleApplyProgram = async (e) => {
+    e.preventDefault();
+    if (!programStudentId || selectedProgramTemplateIds.length === 0 || !programStartDate) {
+      setProgramMsg({ type: 'error', text: 'Selecciona el alumno, fecha de inicio y al menos una plantilla.' });
+      return;
+    }
+
+    setApplyingProgram(true);
+    setProgramMsg({ type: '', text: '' });
+    try {
+      const res = await api.post('/routines/templates/apply-program', {
+        student_id: programStudentId,
+        template_ids: selectedProgramTemplateIds,
+        start_date: programStartDate
+      });
+      setProgramMsg({ type: 'success', text: `¡Se asignaron exitosamente ${res.data.length} rutinas del mesociclo!` });
+      fetchData();
+      setTimeout(() => {
+        setShowApplyProgramModal(false);
+        setProgramMsg({ type: '', text: '' });
+        setSelectedProgramTemplateIds([]);
+      }, 1500);
+    } catch (err) {
+      setProgramMsg({ type: 'error', text: err.response?.data?.detail || 'Error al aplicar mesociclo.' });
+    } finally {
+      setApplyingProgram(false);
+    }
+  };
+
   const handleCreateRoutine = async (e) => {
     e.preventDefault();
     if (selectedExercises.length === 0) {
@@ -281,7 +338,9 @@ export const RoutinesView = () => {
         target_weight: ex.target_weight ? parseFloat(ex.target_weight) : null,
         target_rpe: ex.target_rpe ? parseFloat(ex.target_rpe) : null,
         tempo: ex.tempo ? ex.tempo.trim() : null,
-        coach_notes: ex.coach_notes ? ex.coach_notes.trim() : null
+        coach_notes: ex.coach_notes ? ex.coach_notes.trim() : null,
+        block_section: ex.block_section || 'main',
+        workout_format: ex.workout_format || 'regular'
       }));
 
       const payload = {
@@ -290,6 +349,8 @@ export const RoutinesView = () => {
         title,
         scheduled_at: new Date(scheduledAt).toISOString(),
         notes,
+        warmup_notes: warmupNotes || null,
+        cooldown_notes: cooldownNotes || null,
         exercises: formattedExercises,
         duplicate_to_dates: duplicateDates.length > 0 ? duplicateDates.map(d => new Date(d).toISOString()) : null
       };
@@ -299,6 +360,8 @@ export const RoutinesView = () => {
       setSelectedExercises([]);
       setDuplicateDates([]);
       setNotes('');
+      setWarmupNotes('');
+      setCooldownNotes('');
       fetchData();
     } catch (err) {
       setSaveError(err.response?.data?.detail || 'Error al asignar la rutina.');
@@ -385,6 +448,33 @@ export const RoutinesView = () => {
           >
             <BookOpen size={17} />
             Plantillas ({templates.length})
+          </button>
+
+          <button
+            onClick={() => {
+              if (students.length > 0 && !programStudentId) {
+                setProgramStudentId(students[0].id);
+              }
+              const now = new Date();
+              setProgramStartDate(now.toISOString().split('T')[0]);
+              setShowApplyProgramModal(true);
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '12px 18px',
+              borderRadius: '12px',
+              backgroundColor: 'rgba(56, 189, 248, 0.15)',
+              border: '1px solid rgba(56, 189, 248, 0.35)',
+              color: '#BAE6FD',
+              fontWeight: 700,
+              fontSize: '13.5px',
+              cursor: 'pointer'
+            }}
+          >
+            <Sparkles size={17} />
+            Aplicar Mesociclo
           </button>
 
           <button
@@ -935,6 +1025,30 @@ export const RoutinesView = () => {
                 </div>
               </div>
 
+              {/* TrueCoach Clinical Alert Banner */}
+              {(() => {
+                const sObj = students.find(s => s.id === selectedStudent);
+                if (!sObj?.injuries_notes) return null;
+                return (
+                  <div style={{
+                    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                    border: '1px solid rgba(239, 68, 68, 0.45)',
+                    borderRadius: '12px',
+                    padding: '12px 16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    color: '#FCA5A5'
+                  }}>
+                    <span style={{ fontSize: '20px' }}>⚠️</span>
+                    <div style={{ fontSize: '13px', lineHeight: 1.45 }}>
+                      <strong style={{ color: '#FFF' }}>Alerta de Lesiones / Ficha Clínica del Alumno:</strong>
+                      <div style={{ color: '#FECACA', marginTop: '2px' }}>{sObj.injuries_notes}</div>
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="responsive-grid-2col" style={{ gap: '16px' }}>
                 <div>
                   <label style={labelStyle}>Fecha y Hora Principal *</label>
@@ -951,9 +1065,33 @@ export const RoutinesView = () => {
                   <label style={labelStyle}>Instrucciones Generales de la Sesión</label>
                   <input
                     type="text"
-                    placeholder="Ej: Calentamiento 5m de movilidad de cadera"
+                    placeholder="Ej: Sesión de empuje enfocada en torso"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+
+              {/* TrueCoach 3-Block Session Structure */}
+              <div className="responsive-grid-2col" style={{ gap: '16px' }}>
+                <div>
+                  <label style={{ ...labelStyle, color: '#FCD34D' }}>🔥 Calentamiento & Movilidad (Warm-up)</label>
+                  <input
+                    type="text"
+                    placeholder="Ej: 5 min elíptica + movilidad articular cadera"
+                    value={warmupNotes}
+                    onChange={(e) => setWarmupNotes(e.target.value)}
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={{ ...labelStyle, color: '#67E8F9' }}>❄️ Vuelta a la Calma & Estiramiento (Cool-down)</label>
+                  <input
+                    type="text"
+                    placeholder="Ej: 5 min estiramiento estático isquios y gemelos"
+                    value={cooldownNotes}
+                    onChange={(e) => setCooldownNotes(e.target.value)}
                     style={inputStyle}
                   />
                 </div>
@@ -1140,6 +1278,34 @@ export const RoutinesView = () => {
                                   style={{ width: '50px', padding: '4px 6px', borderRadius: '6px', backgroundColor: 'rgba(110, 136, 66, 0.3)', border: '1px solid rgba(137, 168, 84, 0.6)', color: '#FFF', fontSize: '12px', fontWeight: 700 }}
                                 />
                               </div>
+
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <span style={{ fontSize: '11.5px', color: '#FCD34D' }}>Bloque:</span>
+                                <select
+                                  value={currentDetail.block_section || 'main'}
+                                  onChange={(e) => handleUpdateDetail(ex.id, 'block_section', e.target.value)}
+                                  style={{ padding: '4px 6px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.5)', border: '1px solid var(--md-sys-color-outline-variant)', color: '#DEEAC1', fontSize: '11.5px' }}
+                                >
+                                  <option value="warmup">🔥 Warm-up</option>
+                                  <option value="main">🏋️ Principal</option>
+                                  <option value="cooldown">❄️ Cool-down</option>
+                                </select>
+                              </div>
+
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <span style={{ fontSize: '11.5px', color: '#BAE6FD' }}>Formato:</span>
+                                <select
+                                  value={currentDetail.workout_format || 'regular'}
+                                  onChange={(e) => handleUpdateDetail(ex.id, 'workout_format', e.target.value)}
+                                  style={{ padding: '4px 6px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.5)', border: '1px solid var(--md-sys-color-outline-variant)', color: '#BAE6FD', fontSize: '11.5px' }}
+                                >
+                                  <option value="regular">Regular</option>
+                                  <option value="superset">Superserie</option>
+                                  <option value="circuit">Circuito</option>
+                                  <option value="amrap">AMRAP</option>
+                                  <option value="emom">EMOM</option>
+                                </select>
+                              </div>
                             </div>
 
                             {/* Row 2: Target Weight, Target RPE, Tempo, Notes */}
@@ -1263,6 +1429,43 @@ export const RoutinesView = () => {
                   <span style={{ fontSize: '13px', color: 'var(--md-sys-color-tertiary)' }}>
                     Alumno: <strong>{inspectRoutine.student?.name || inspectRoutine.user?.name}</strong>
                   </span>
+                  {inspectRoutine.is_executed && (
+                    inspectRoutine.is_reviewed_by_coach ? (
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        backgroundColor: 'rgba(110, 136, 66, 0.3)',
+                        color: '#DEEAC1',
+                        border: '1px solid rgba(137, 168, 84, 0.5)',
+                        padding: '3px 8px',
+                        borderRadius: '6px'
+                      }}>
+                        ✔ Revisada por Coach
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleMarkReviewed(inspectRoutine.id)}
+                        disabled={markingReviewed}
+                        style={{
+                          padding: '3px 10px',
+                          borderRadius: '6px',
+                          backgroundColor: '#6E8842',
+                          border: '1px solid rgba(137, 168, 84, 0.6)',
+                          color: '#FFF',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <Check size={13} />
+                        {markingReviewed ? 'Revisando...' : 'Dar V°B° Coach'}
+                      </button>
+                    )
+                  )}
                 </div>
                 <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#FFF' }}>
                   {inspectRoutine.title}
@@ -1734,6 +1937,188 @@ export const RoutinesView = () => {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Aplicar Mesociclo / Programa Multi-Semana (TrueCoach Multi-week Program) */}
+      {showApplyProgramModal && (
+        <div style={modalBackdropStyle} onClick={() => setShowApplyProgramModal(false)}>
+          <div className="responsive-modal-box" style={{ ...modalBoxStyle, width: '100%', maxWidth: '640px', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '12px',
+                  backgroundColor: 'rgba(56, 189, 248, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#38BDF8'
+                }}>
+                  <Sparkles size={20} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '19px', fontWeight: 800, color: '#FFF', margin: 0 }}>
+                    Asignar Programa Mesociclo
+                  </h3>
+                  <span style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                    Aplica múltiples semanas de plantillas en 1 solo clic
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowApplyProgramModal(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--md-sys-color-outline)', cursor: 'pointer', fontSize: '18px' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {programMsg.text && (
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: '10px',
+                marginBottom: '16px',
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                backgroundColor: programMsg.type === 'success' ? 'rgba(110, 136, 66, 0.2)' : 'rgba(255, 180, 171, 0.15)',
+                color: programMsg.type === 'success' ? '#DEEAC1' : 'var(--md-sys-color-error)',
+                border: `1px solid ${programMsg.type === 'success' ? 'rgba(110, 136, 66, 0.4)' : 'rgba(255, 180, 171, 0.3)'}`
+              }}>
+                {programMsg.type === 'success' ? <Check size={16} /> : <X size={16} />}
+                {programMsg.text}
+              </div>
+            )}
+
+            <form onSubmit={handleApplyProgram} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={labelStyle}>Alumno Objetivo *</label>
+                <select
+                  value={programStudentId}
+                  onChange={(e) => setProgramStudentId(e.target.value)}
+                  style={inputStyle}
+                  required
+                >
+                  {students.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name ? `${s.name} (${s.rut})` : `RUT: ${s.rut}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Fecha de Inicio del Programa (Semana 1) *</label>
+                <input
+                  type="date"
+                  required
+                  value={programStartDate}
+                  onChange={(e) => setProgramStartDate(e.target.value)}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>
+                  Selecciona las Plantillas del Mesociclo ({selectedProgramTemplateIds.length} seleccionadas) *
+                </label>
+                <div style={{
+                  maxHeight: '260px',
+                  overflowY: 'auto',
+                  border: '1px solid var(--md-sys-color-outline-variant)',
+                  borderRadius: '12px',
+                  padding: '10px',
+                  backgroundColor: 'rgba(0,0,0,0.2)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px'
+                }}>
+                  {templates.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--md-sys-color-outline)', fontSize: '13px' }}>
+                      No tienes plantillas creadas. Guarda una rutina como plantilla primero.
+                    </div>
+                  ) : (
+                    templates.map((tpl) => {
+                      const isChecked = selectedProgramTemplateIds.includes(tpl.id);
+                      return (
+                        <label
+                          key={tpl.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '10px 12px',
+                            borderRadius: '8px',
+                            backgroundColor: isChecked ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255,255,255,0.03)',
+                            border: isChecked ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid transparent',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedProgramTemplateIds(prev => [...prev, tpl.id]);
+                              } else {
+                                setSelectedProgramTemplateIds(prev => prev.filter(id => id !== tpl.id));
+                              }
+                            }}
+                            style={{ width: '16px', height: '16px', accentColor: '#38BDF8' }}
+                          />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFF' }}>
+                              {tpl.title}
+                            </div>
+                            <div style={{ fontSize: '11px', color: 'var(--md-sys-color-tertiary)' }}>
+                              Semana {tpl.week_number || 1} · Día {tpl.day_of_week || 1} · {tpl.template_exercises?.length || 0} ejercicios · {tpl.category_tag}
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowApplyProgramModal(false)}
+                  style={{
+                    padding: '9px 16px',
+                    borderRadius: '10px',
+                    backgroundColor: 'transparent',
+                    border: '1px solid var(--md-sys-color-outline-variant)',
+                    color: 'var(--md-sys-color-on-surface-variant)',
+                    cursor: 'pointer',
+                    fontSize: '13px'
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={applyingProgram || selectedProgramTemplateIds.length === 0}
+                  style={{
+                    padding: '9px 20px',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+                    color: '#FFF',
+                    border: '1px solid rgba(56, 189, 248, 0.5)',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    cursor: (applyingProgram || selectedProgramTemplateIds.length === 0) ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {applyingProgram ? 'Aplicando Mesociclo...' : 'Aplicar Programa al Alumno'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

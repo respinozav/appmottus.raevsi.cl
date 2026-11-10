@@ -177,6 +177,20 @@ CREATE TABLE IF NOT EXISTS bdmottus.habit_logs (
 
 CREATE INDEX IF NOT EXISTS idx_habit_logs_student_date ON bdmottus.habit_logs (student_id, log_date DESC);
 
+-- Tabla de Mensajería Directa 1 a 1 (Direct Inbox TrueCoach)
+CREATE TABLE IF NOT EXISTS bdmottus.direct_messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id UUID NOT NULL REFERENCES bdmottus.students(id) ON DELETE CASCADE,
+    coach_id UUID NOT NULL REFERENCES bdmottus.users(id) ON DELETE CASCADE,
+    sender_role VARCHAR(20) NOT NULL CHECK (sender_role IN ('coach', 'student')),
+    content TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_direct_messages_conversation ON bdmottus.direct_messages (student_id, coach_id, created_at ASC);
+CREATE INDEX IF NOT EXISTS idx_direct_messages_unread ON bdmottus.direct_messages (student_id, coach_id, is_read) WHERE is_read = FALSE;
+
 -- Reotorgar permisos a las tablas recién creadas a usr_mottus
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA bdmottus TO usr_mottus;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA bdmottus TO usr_mottus;

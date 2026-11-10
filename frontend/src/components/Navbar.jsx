@@ -1,11 +1,29 @@
-import React, { useState } from 'react';
-import { Dumbbell, UserCheck, CalendarCheck, LogOut, TrendingUp, BarChart3, User as UserIcon, Lock, KeyRound, Check, X, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Dumbbell, UserCheck, CalendarCheck, LogOut, TrendingUp, BarChart3, User as UserIcon, Lock, KeyRound, Check, X, AlertCircle, MessageSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { DirectMessagesModal } from './DirectMessagesModal';
 
 export const Navbar = ({ activeTab, setActiveTab }) => {
   const { user, logout, updateUser } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await api.get('/users/messages-unread-count');
+      setUnreadCount(res.data?.unread_count || 0);
+    } catch (err) {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 15000);
+    return () => clearInterval(interval);
+  }, []);
   const [profileForm, setProfileForm] = useState({
     name: '',
     email: '',
@@ -197,6 +215,58 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
               RUT: {user?.rut}
             </span>
           </div>
+
+          {/* Botón Chat Directo con Badge */}
+          <button
+            onClick={() => setIsChatOpen(true)}
+            title="Mensajes Directos (Inbox 1 a 1)"
+            aria-label="Mensajes Directos"
+            style={{
+              position: 'relative',
+              background: unreadCount > 0 ? 'rgba(110, 136, 66, 0.3)' : 'var(--md-sys-color-surface-variant)',
+              border: unreadCount > 0 ? '1px solid rgba(137, 168, 84, 0.6)' : '1px solid var(--md-sys-color-outline-variant)',
+              color: unreadCount > 0 ? '#DEEAC1' : 'var(--md-sys-color-on-surface-variant)',
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s',
+              touchAction: 'manipulation'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(110, 136, 66, 0.25)';
+              e.currentTarget.style.color = '#DEEAC1';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = unreadCount > 0 ? 'rgba(110, 136, 66, 0.3)' : 'var(--md-sys-color-surface-variant)';
+              e.currentTarget.style.color = unreadCount > 0 ? '#DEEAC1' : 'var(--md-sys-color-on-surface-variant)';
+            }}
+          >
+            <MessageSquare size={17} />
+            {unreadCount > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '-4px',
+                right: '-4px',
+                backgroundColor: '#89A854',
+                color: '#151D14',
+                fontSize: '10px',
+                fontWeight: 800,
+                borderRadius: '10px',
+                padding: '1px 5px',
+                minWidth: '16px',
+                height: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 0 6px rgba(137, 168, 84, 0.8)'
+              }}>
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
 
           <button
             onClick={openProfileModal}
@@ -526,6 +596,14 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
           </div>
         </div>
       )}
+
+      {/* Modal de Mensajes Directos 1 a 1 (Inbox TrueCoach) */}
+      <DirectMessagesModal
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        user={user}
+        onMessagesRead={fetchUnreadCount}
+      />
     </>
   );
 };

@@ -41,11 +41,16 @@ export const StudentsView = () => {
   const [metricHeight, setMetricHeight] = useState('');
   const [metricFat, setMetricFat] = useState('');
   const [metricMuscle, setMetricMuscle] = useState('');
+  const [metricWaist, setMetricWaist] = useState('');
+  const [metricHip, setMetricHip] = useState('');
+  const [metricChest, setMetricChest] = useState('');
+  const [metricArm, setMetricArm] = useState('');
+  const [metricThigh, setMetricThigh] = useState('');
   const [metricNotes, setMetricNotes] = useState('');
   const [savingMetric, setSavingMetric] = useState(false);
   const [metricError, setMetricError] = useState('');
 
-  // Coach Settings & Membership Modal
+  // Coach Settings, Membership & Athlete Clinical Profile (TrueCoach)
   const [showCoachSettingsModal, setShowCoachSettingsModal] = useState(false);
   const [selectedStudentForSettings, setSelectedStudentForSettings] = useState(null);
   const [coachSettingsForm, setCoachSettingsForm] = useState({
@@ -55,7 +60,11 @@ export const StudentsView = () => {
     daily_kcal_target: '',
     daily_protein_target: '',
     daily_steps_target: '',
-    daily_water_liters_target: ''
+    daily_water_liters_target: '',
+    injuries_notes: '',
+    fitness_goals: '',
+    equipment_available: '',
+    private_coach_notes: ''
   });
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsError, setSettingsError] = useState('');
@@ -133,12 +142,22 @@ export const StudentsView = () => {
         height: metricHeight ? parseFloat(metricHeight) : null,
         body_fat_percentage: metricFat ? parseFloat(metricFat) : null,
         muscle_mass: metricMuscle ? parseFloat(metricMuscle) : null,
+        waist_cm: metricWaist ? parseFloat(metricWaist) : null,
+        hip_cm: metricHip ? parseFloat(metricHip) : null,
+        chest_cm: metricChest ? parseFloat(metricChest) : null,
+        arm_cm: metricArm ? parseFloat(metricArm) : null,
+        thigh_cm: metricThigh ? parseFloat(metricThigh) : null,
         notes: metricNotes || null
       });
       setShowMetricModal(false);
       setMetricNotes('');
       setMetricFat('');
       setMetricMuscle('');
+      setMetricWaist('');
+      setMetricHip('');
+      setMetricChest('');
+      setMetricArm('');
+      setMetricThigh('');
       fetchStudents();
     } catch (err) {
       setMetricError(err.response?.data?.detail || 'Error al guardar la evaluación antropométrica.');
@@ -147,7 +166,7 @@ export const StudentsView = () => {
     }
   };
 
-  // Open Coach Settings & Membership Modal
+  // Open Coach Settings, Membership & Athlete Clinical Profile
   const handleOpenCoachSettings = (student) => {
     setSelectedStudentForSettings(student);
     setCoachSettingsForm({
@@ -157,7 +176,11 @@ export const StudentsView = () => {
       daily_kcal_target: student.daily_kcal_target || '',
       daily_protein_target: student.daily_protein_target || '',
       daily_steps_target: student.daily_steps_target || '',
-      daily_water_liters_target: student.daily_water_liters_target || ''
+      daily_water_liters_target: student.daily_water_liters_target || '',
+      injuries_notes: student.injuries_notes || '',
+      fitness_goals: student.fitness_goals || '',
+      equipment_available: student.equipment_available || '',
+      private_coach_notes: student.private_coach_notes || ''
     });
     setSettingsError('');
     setShowCoachSettingsModal(true);
@@ -178,6 +201,10 @@ export const StudentsView = () => {
         daily_protein_target: coachSettingsForm.daily_protein_target ? parseInt(coachSettingsForm.daily_protein_target) : null,
         daily_steps_target: coachSettingsForm.daily_steps_target ? parseInt(coachSettingsForm.daily_steps_target) : null,
         daily_water_liters_target: coachSettingsForm.daily_water_liters_target ? parseFloat(coachSettingsForm.daily_water_liters_target) : null,
+        injuries_notes: coachSettingsForm.injuries_notes?.trim() || null,
+        fitness_goals: coachSettingsForm.fitness_goals?.trim() || null,
+        equipment_available: coachSettingsForm.equipment_available?.trim() || null,
+        private_coach_notes: coachSettingsForm.private_coach_notes?.trim() || null
       };
 
       await api.patch(`/users/students/${selectedStudentForSettings.id}/coach-settings`, payload);
@@ -681,6 +708,25 @@ export const StudentsView = () => {
                         {student.daily_protein_target && <span>🥩 {student.daily_protein_target}g prot</span>}
                         {student.daily_water_liters_target && <span>💧 {student.daily_water_liters_target}L agua</span>}
                         {student.daily_steps_target && <span>👟 {student.daily_steps_target.toLocaleString()} pasos</span>}
+                      </div>
+                    )}
+
+                    {/* Alerta de Lesiones en Tarjeta */}
+                    {student.injuries_notes && (
+                      <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        marginTop: '6px',
+                        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                        border: '1px solid rgba(239, 68, 68, 0.4)',
+                        borderRadius: '6px',
+                        padding: '3px 8px',
+                        fontSize: '11px',
+                        color: '#FCA5A5'
+                      }}>
+                        <span>⚠️</span>
+                        <strong>Lesión/Alerta:</strong> {student.injuries_notes}
                       </div>
                     )}
                   </div>
@@ -1212,6 +1258,70 @@ export const StudentsView = () => {
                 </div>
               </div>
 
+              {/* Perímetros Anatómicos (TrueCoach Circumferences) */}
+              <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '14px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#DEEAC1' }}>
+                  Perímetros Anatómicos (cm)
+                </span>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: '10px' }}>
+                  <div>
+                    <label style={{ ...labelStyle, fontSize: '11px' }}>Cintura</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      placeholder="cm"
+                      value={metricWaist}
+                      onChange={(e) => setMetricWaist(e.target.value)}
+                      style={{ ...inputStyle, padding: '8px 10px', fontSize: '13px' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, fontSize: '11px' }}>Cadera</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      placeholder="cm"
+                      value={metricHip}
+                      onChange={(e) => setMetricHip(e.target.value)}
+                      style={{ ...inputStyle, padding: '8px 10px', fontSize: '13px' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, fontSize: '11px' }}>Pecho</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      placeholder="cm"
+                      value={metricChest}
+                      onChange={(e) => setMetricChest(e.target.value)}
+                      style={{ ...inputStyle, padding: '8px 10px', fontSize: '13px' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, fontSize: '11px' }}>Brazo</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      placeholder="cm"
+                      value={metricArm}
+                      onChange={(e) => setMetricArm(e.target.value)}
+                      style={{ ...inputStyle, padding: '8px 10px', fontSize: '13px' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, fontSize: '11px' }}>Muslo</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      placeholder="cm"
+                      value={metricThigh}
+                      onChange={(e) => setMetricThigh(e.target.value)}
+                      style={{ ...inputStyle, padding: '8px 10px', fontSize: '13px' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label style={labelStyle}>Notas del Coach</label>
                 <input
@@ -1392,6 +1502,59 @@ export const StudentsView = () => {
                       style={inputStyle}
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Sección 3: Ficha Clínica y Objetivos del Atleta (TrueCoach Athlete Profile) */}
+              <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#DEEAC1', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <AlertTriangle size={16} color="#FFB74D" /> Ficha Clínica & Objetivos
+                </span>
+
+                <div>
+                  <label style={{ ...labelStyle, color: '#FCA5A5' }}>⚠️ Lesiones, Molestias o Limitaciones Médicas</label>
+                  <textarea
+                    rows="2"
+                    placeholder="Ej: Tendinitis en rotuliano derecho. Evitar sentadilla pesada."
+                    value={coachSettingsForm.injuries_notes}
+                    onChange={(e) => setCoachSettingsForm({ ...coachSettingsForm, injuries_notes: e.target.value })}
+                    style={{ ...inputStyle, resize: 'vertical' }}
+                  />
+                </div>
+
+                <div className="responsive-grid-2col" style={{ gap: '12px' }}>
+                  <div>
+                    <label style={labelStyle}>🎯 Objetivos & Metas del Alumno</label>
+                    <input
+                      type="text"
+                      placeholder="Ej: Ganar 3kg masa muscular, mejorar dominadas"
+                      value={coachSettingsForm.fitness_goals}
+                      onChange={(e) => setCoachSettingsForm({ ...coachSettingsForm, fitness_goals: e.target.value })}
+                      style={inputStyle}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>🏋️ Equipamiento Disponible</label>
+                    <input
+                      type="text"
+                      placeholder="Ej: Gym comercial completo / Mancuernas"
+                      value={coachSettingsForm.equipment_available}
+                      onChange={(e) => setCoachSettingsForm({ ...coachSettingsForm, equipment_available: e.target.value })}
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ ...labelStyle, color: 'var(--md-sys-color-tertiary)' }}>🔒 Notas Privadas del Coach (Confidencial)</label>
+                  <textarea
+                    rows="2"
+                    placeholder="Notas internas que solo ven los coaches y administradores..."
+                    value={coachSettingsForm.private_coach_notes}
+                    onChange={(e) => setCoachSettingsForm({ ...coachSettingsForm, private_coach_notes: e.target.value })}
+                    style={{ ...inputStyle, resize: 'vertical' }}
+                  />
                 </div>
               </div>
 

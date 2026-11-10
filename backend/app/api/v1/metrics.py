@@ -33,6 +33,14 @@ def build_metric_out(metric: BodyMetric, student_height: Optional[float] = None)
         body_fat_percentage=float(metric.body_fat_percentage) if metric.body_fat_percentage else None,
         muscle_mass=float(metric.muscle_mass) if metric.muscle_mass else None,
         notes=metric.notes,
+        waist_cm=float(metric.waist_cm) if metric.waist_cm else None,
+        hip_cm=float(metric.hip_cm) if metric.hip_cm else None,
+        chest_cm=float(metric.chest_cm) if metric.chest_cm else None,
+        arm_cm=float(metric.arm_cm) if metric.arm_cm else None,
+        thigh_cm=float(metric.thigh_cm) if metric.thigh_cm else None,
+        photo_front_url=metric.photo_front_url,
+        photo_side_url=metric.photo_side_url,
+        photo_back_url=metric.photo_back_url,
         measured_at=metric.measured_at,
         created_at=metric.created_at,
         bmi=bmi
@@ -77,6 +85,14 @@ def log_my_metric(
         body_fat_percentage=metric_in.body_fat_percentage,
         muscle_mass=metric_in.muscle_mass,
         notes=metric_in.notes,
+        waist_cm=metric_in.waist_cm,
+        hip_cm=metric_in.hip_cm,
+        chest_cm=metric_in.chest_cm,
+        arm_cm=metric_in.arm_cm,
+        thigh_cm=metric_in.thigh_cm,
+        photo_front_url=metric_in.photo_front_url,
+        photo_side_url=metric_in.photo_side_url,
+        photo_back_url=metric_in.photo_back_url,
         measured_at=metric_in.measured_at
     )
     db.add(metric)
@@ -140,6 +156,14 @@ def record_student_metric_by_coach(
         body_fat_percentage=metric_in.body_fat_percentage,
         muscle_mass=metric_in.muscle_mass,
         notes=metric_in.notes,
+        waist_cm=metric_in.waist_cm,
+        hip_cm=metric_in.hip_cm,
+        chest_cm=metric_in.chest_cm,
+        arm_cm=metric_in.arm_cm,
+        thigh_cm=metric_in.thigh_cm,
+        photo_front_url=metric_in.photo_front_url,
+        photo_side_url=metric_in.photo_side_url,
+        photo_back_url=metric_in.photo_back_url,
         measured_at=metric_in.measured_at
     )
     db.add(metric)

@@ -16,7 +16,12 @@ import {
   Footprints,
   Moon,
   Check,
-  AlertCircle
+  AlertCircle,
+  Camera,
+  Image as ImageIcon,
+  Eye,
+  Calendar,
+  Sparkles
 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -38,6 +43,20 @@ export const ProgressView = () => {
   const [bodyFat, setBodyFat] = useState('');
   const [muscleMass, setMuscleMass] = useState('');
   const [notes, setNotes] = useState('');
+
+  // Perímetros y Fotos
+  const [waist, setWaist] = useState('');
+  const [hip, setHip] = useState('');
+  const [chest, setChest] = useState('');
+  const [arm, setArm] = useState('');
+  const [thigh, setThigh] = useState('');
+  const [photoFront, setPhotoFront] = useState('');
+  const [photoSide, setPhotoSide] = useState('');
+  const [photoBack, setPhotoBack] = useState('');
+
+  // Comparador Antes vs Después
+  const [compareIdA, setCompareIdA] = useState('');
+  const [compareIdB, setCompareIdB] = useState('');
 
   // Strength / 1RM states
   const [loggedExercises, setLoggedExercises] = useState([]);
@@ -65,6 +84,10 @@ export const ProgressView = () => {
     try {
       const res = await api.get('/metrics/my-metrics');
       setMetrics(res.data);
+      if (res.data.length > 0) {
+        setCompareIdB(prev => prev || res.data[0].id);
+        setCompareIdA(prev => prev || res.data[res.data.length - 1].id);
+      }
     } catch (err) {
       console.error('Error al cargar métricas corporales:', err);
     } finally {
@@ -179,10 +202,26 @@ export const ProgressView = () => {
         height: height ? parseFloat(height) : null,
         body_fat_percentage: bodyFat ? parseFloat(bodyFat) : null,
         muscle_mass: muscleMass ? parseFloat(muscleMass) : null,
+        waist_cm: waist ? parseFloat(waist) : null,
+        hip_cm: hip ? parseFloat(hip) : null,
+        chest_cm: chest ? parseFloat(chest) : null,
+        arm_cm: arm ? parseFloat(arm) : null,
+        thigh_cm: thigh ? parseFloat(thigh) : null,
+        photo_front_url: photoFront.trim() || null,
+        photo_side_url: photoSide.trim() || null,
+        photo_back_url: photoBack.trim() || null,
         notes: notes || null
       });
       setShowModal(false);
       setNotes('');
+      setWaist('');
+      setHip('');
+      setChest('');
+      setArm('');
+      setThigh('');
+      setPhotoFront('');
+      setPhotoSide('');
+      setPhotoBack('');
       fetchMetrics();
     } catch (err) {
       setSaveError(err.response?.data?.detail || 'Error al guardar la medición.');
@@ -387,7 +426,7 @@ export const ProgressView = () => {
           </p>
         </div>
 
-        {activeSubTab === 'body' && (
+        {(activeSubTab === 'body' || activeSubTab === 'photos') && (
           <div className="view-actions">
             <button
               onClick={() => setShowModal(true)}
@@ -410,19 +449,20 @@ export const ProgressView = () => {
               }}
             >
               <Plus size={18} />
-              Registrar Peso / Medición
+              Registrar Medición / Fotos
             </button>
           </div>
         )}
       </div>
 
-      {/* Sub-Tabs: Composición Corporal vs Mi Fuerza / RMs */}
+      {/* Sub-Tabs: Composición Corporal vs Mi Fuerza / RMs vs Hábitos vs Fotos */}
       <div style={{
         display: 'flex',
         gap: '12px',
         borderBottom: '1px solid var(--md-sys-color-outline-variant)',
         paddingBottom: '12px',
-        marginBottom: '28px'
+        marginBottom: '28px',
+        overflowX: 'auto'
       }}>
         <button
           onClick={() => setActiveSubTab('body')}
@@ -436,6 +476,7 @@ export const ProgressView = () => {
             cursor: 'pointer',
             fontWeight: 700,
             fontSize: '14px',
+            whiteSpace: 'nowrap',
             backgroundColor: activeSubTab === 'body' ? 'var(--md-sys-color-primary)' : 'transparent',
             color: activeSubTab === 'body' ? '#FFF' : 'var(--md-sys-color-on-surface-variant)',
             boxShadow: activeSubTab === 'body' ? '0 2px 10px rgba(110, 136, 66, 0.35)' : 'none'
@@ -457,6 +498,7 @@ export const ProgressView = () => {
             cursor: 'pointer',
             fontWeight: 700,
             fontSize: '14px',
+            whiteSpace: 'nowrap',
             backgroundColor: activeSubTab === 'strength' ? 'var(--md-sys-color-primary)' : 'transparent',
             color: activeSubTab === 'strength' ? '#FFF' : 'var(--md-sys-color-on-surface-variant)',
             boxShadow: activeSubTab === 'strength' ? '0 2px 10px rgba(110, 136, 66, 0.35)' : 'none'
@@ -478,6 +520,7 @@ export const ProgressView = () => {
             cursor: 'pointer',
             fontWeight: 700,
             fontSize: '14px',
+            whiteSpace: 'nowrap',
             backgroundColor: activeSubTab === 'habits' ? 'var(--md-sys-color-primary)' : 'transparent',
             color: activeSubTab === 'habits' ? '#FFF' : 'var(--md-sys-color-on-surface-variant)',
             boxShadow: activeSubTab === 'habits' ? '0 2px 10px rgba(110, 136, 66, 0.35)' : 'none'
@@ -485,6 +528,28 @@ export const ProgressView = () => {
         >
           <Utensils size={18} />
           Hábitos & Nutrición
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('photos')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 20px',
+            borderRadius: '12px',
+            border: 'none',
+            cursor: 'pointer',
+            fontWeight: 700,
+            fontSize: '14px',
+            whiteSpace: 'nowrap',
+            backgroundColor: activeSubTab === 'photos' ? 'var(--md-sys-color-primary)' : 'transparent',
+            color: activeSubTab === 'photos' ? '#FFF' : 'var(--md-sys-color-on-surface-variant)',
+            boxShadow: activeSubTab === 'photos' ? '0 2px 10px rgba(110, 136, 66, 0.35)' : 'none'
+          }}
+        >
+          <Camera size={18} />
+          Fotos & Comparador
         </button>
       </div>
 
@@ -617,6 +682,8 @@ export const ProgressView = () => {
                       <th style={{ padding: '12px' }}>Altura (cm)</th>
                       <th style={{ padding: '12px' }}>IMC</th>
                       <th style={{ padding: '12px' }}>% Grasa</th>
+                      <th style={{ padding: '12px' }}>Perímetros (cm)</th>
+                      <th style={{ padding: '12px' }}>Fotos</th>
                       <th style={{ padding: '12px' }}>Notas</th>
                       <th style={{ padding: '12px', textAlign: 'right' }}>Acciones</th>
                     </tr>
@@ -643,7 +710,47 @@ export const ProgressView = () => {
                         <td style={{ padding: '12px', color: 'var(--md-sys-color-on-surface)' }}>
                           {m.body_fat_percentage ? `${m.body_fat_percentage}%` : '--'}
                         </td>
-                        <td style={{ padding: '12px', color: 'var(--md-sys-color-on-surface-variant)', fontSize: '12px', maxWidth: '200px' }}>
+                        <td style={{ padding: '12px', color: 'var(--md-sys-color-on-surface)', fontSize: '12px' }}>
+                          {(m.waist_cm || m.hip_cm || m.chest_cm || m.arm_cm || m.thigh_cm) ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              {m.waist_cm && <span>Cint: {m.waist_cm}cm</span>}
+                              {m.hip_cm && <span>Cad: {m.hip_cm}cm</span>}
+                              {m.chest_cm && <span>Pech: {m.chest_cm}cm</span>}
+                              {m.arm_cm && <span>Braz: {m.arm_cm}cm</span>}
+                              {m.thigh_cm && <span>Musl: {m.thigh_cm}cm</span>}
+                            </div>
+                          ) : (
+                            <span style={{ color: 'var(--md-sys-color-tertiary)' }}>--</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '12px' }}>
+                          {(m.photo_front_url || m.photo_side_url || m.photo_back_url) ? (
+                            <button
+                              onClick={() => {
+                                setCompareIdB(m.id);
+                                setActiveSubTab('photos');
+                              }}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '4px 8px',
+                                borderRadius: '8px',
+                                backgroundColor: 'rgba(110, 136, 66, 0.25)',
+                                color: '#DEEAC1',
+                                border: '1px solid rgba(137, 168, 84, 0.3)',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <Camera size={12} /> Ver fotos
+                            </button>
+                          ) : (
+                            <span style={{ color: 'var(--md-sys-color-tertiary)', fontSize: '12px' }}>Sin fotos</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '12px', color: 'var(--md-sys-color-on-surface-variant)', fontSize: '12px', maxWidth: '180px' }}>
                           {m.notes || '-'}
                         </td>
                         <td style={{ padding: '12px', textAlign: 'right' }}>
@@ -1144,6 +1251,339 @@ export const ProgressView = () => {
         </div>
       )}
 
+      {/* TAB 4: FOTOS & COMPARADOR ANTES VS DESPUÉS */}
+      {activeSubTab === 'photos' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Header & Date Selectors */}
+          <div className="md-card" style={{ padding: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#FFF', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Sparkles size={20} color="#89A854" />
+                  Comparador Visual Antes vs Después (Side-by-Side)
+                </h3>
+                <p style={{ fontSize: '13px', color: 'var(--md-sys-color-tertiary)', marginTop: '4px' }}>
+                  Selecciona dos fechas de evaluación para contrastar fotografías y calcular diferencias exactas de masa y perímetros.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowModal(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 18px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #6E8842 0%, #586E33 100%)',
+                  color: '#FFF',
+                  border: '1px solid rgba(137, 168, 84, 0.4)',
+                  fontWeight: 700,
+                  fontSize: '13.5px',
+                  cursor: 'pointer'
+                }}
+              >
+                <Plus size={16} /> Subir Fotos / Medición
+              </button>
+            </div>
+
+            {metrics.length === 0 ? (
+              <div style={{ padding: '36px', textAlign: 'center', color: 'var(--md-sys-color-tertiary)' }}>
+                No tienes mediciones registradas aún. Registra una medición con fotografías para utilizar el comparador.
+              </div>
+            ) : (
+              <div className="responsive-grid-2col" style={{ gap: '20px' }}>
+                <div style={{ padding: '16px', borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#90CAF9', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                    <Calendar size={14} /> Evaluación Inicial / "Antes" (A)
+                  </label>
+                  <select
+                    value={compareIdA}
+                    onChange={(e) => setCompareIdA(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      backgroundColor: 'var(--md-sys-color-surface-variant)',
+                      border: '1px solid var(--md-sys-color-outline-variant)',
+                      color: '#FFF',
+                      fontSize: '13.5px',
+                      outline: 'none'
+                    }}
+                  >
+                    {metrics.map(m => (
+                      <option key={`a-${m.id}`} value={m.id}>
+                        {new Date(m.measured_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })} — {m.weight} kg {m.body_fat_percentage ? `(${m.body_fat_percentage}% grasa)` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ padding: '16px', borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#81C784', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                    <Calendar size={14} /> Evaluación Actual / "Después" (B)
+                  </label>
+                  <select
+                    value={compareIdB}
+                    onChange={(e) => setCompareIdB(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      backgroundColor: 'var(--md-sys-color-surface-variant)',
+                      border: '1px solid var(--md-sys-color-outline-variant)',
+                      color: '#FFF',
+                      fontSize: '13.5px',
+                      outline: 'none'
+                    }}
+                  >
+                    {metrics.map(m => (
+                      <option key={`b-${m.id}`} value={m.id}>
+                        {new Date(m.measured_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })} — {m.weight} kg {m.body_fat_percentage ? `(${m.body_fat_percentage}% grasa)` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Delta Comparisons and Photos */}
+          {(() => {
+            const metricA = metrics.find(m => m.id === compareIdA) || metrics[metrics.length - 1];
+            const metricB = metrics.find(m => m.id === compareIdB) || metrics[0];
+
+            if (!metricA || !metricB) return null;
+
+            const calcDiff = (valB, valA, unit = '') => {
+              if (valB === null || valB === undefined || valA === null || valA === undefined) return null;
+              const diff = Math.round((valB - valA) * 10) / 10;
+              const isZero = diff === 0;
+              const isPositive = diff > 0;
+              return {
+                diff,
+                text: `${isPositive ? '+' : ''}${diff} ${unit}`,
+                color: isZero ? 'var(--md-sys-color-tertiary)' : isPositive ? '#FFB74D' : '#81C784'
+              };
+            };
+
+            const diffWeight = calcDiff(metricB.weight, metricA.weight, 'kg');
+            const diffFat = calcDiff(metricB.body_fat_percentage, metricA.body_fat_percentage, '%');
+            const diffWaist = calcDiff(metricB.waist_cm, metricA.waist_cm, 'cm');
+            const diffHip = calcDiff(metricB.hip_cm, metricA.hip_cm, 'cm');
+            const diffChest = calcDiff(metricB.chest_cm, metricA.chest_cm, 'cm');
+            const diffArm = calcDiff(metricB.arm_cm, metricA.arm_cm, 'cm');
+            const diffThigh = calcDiff(metricB.thigh_cm, metricA.thigh_cm, 'cm');
+
+            return (
+              <>
+                {/* KPI Deltas */}
+                <div className="responsive-kpi-grid">
+                  <div className="md-card" style={{ padding: '18px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--md-sys-color-tertiary)', fontWeight: 600 }}>Δ PESO CORPORAL</span>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                      <span style={{ fontSize: '24px', fontWeight: 800, color: '#FFF' }}>
+                        {metricA.weight}kg → {metricB.weight}kg
+                      </span>
+                    </div>
+                    {diffWeight && (
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: diffWeight.color }}>
+                        {diffWeight.text}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="md-card" style={{ padding: '18px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--md-sys-color-tertiary)', fontWeight: 600 }}>Δ GRASA CORPORAL</span>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                      <span style={{ fontSize: '24px', fontWeight: 800, color: '#FFF' }}>
+                        {metricA.body_fat_percentage ? `${metricA.body_fat_percentage}%` : '--'} → {metricB.body_fat_percentage ? `${metricB.body_fat_percentage}%` : '--'}
+                      </span>
+                    </div>
+                    {diffFat && (
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: diffFat.color }}>
+                        {diffFat.text}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="md-card" style={{ padding: '18px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--md-sys-color-tertiary)', fontWeight: 600 }}>Δ CINTURA</span>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                      <span style={{ fontSize: '24px', fontWeight: 800, color: '#FFF' }}>
+                        {metricA.waist_cm ? `${metricA.waist_cm}cm` : '--'} → {metricB.waist_cm ? `${metricB.waist_cm}cm` : '--'}
+                      </span>
+                    </div>
+                    {diffWaist && (
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: diffWaist.color }}>
+                        {diffWaist.text}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="md-card" style={{ padding: '18px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--md-sys-color-tertiary)', fontWeight: 600 }}>Δ CADERA</span>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                      <span style={{ fontSize: '24px', fontWeight: 800, color: '#FFF' }}>
+                        {metricA.hip_cm ? `${metricA.hip_cm}cm` : '--'} → {metricB.hip_cm ? `${metricB.hip_cm}cm` : '--'}
+                      </span>
+                    </div>
+                    {diffHip && (
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: diffHip.color }}>
+                        {diffHip.text}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Side-by-side Photo Comparison */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {[
+                    { label: 'Vista Frontal', photoA: metricA.photo_front_url, photoB: metricB.photo_front_url },
+                    { label: 'Vista Lateral / Perfil', photoA: metricA.photo_side_url, photoB: metricB.photo_side_url },
+                    { label: 'Vista Posterior / Espalda', photoA: metricA.photo_back_url, photoB: metricB.photo_back_url }
+                  ].map((angle, idx) => (
+                    <div key={idx} className="md-card" style={{ padding: '24px' }}>
+                      <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#DEEAC1', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Camera size={18} color="#89A854" />
+                        {angle.label}
+                      </h4>
+
+                      <div className="responsive-grid-2col" style={{ gap: '20px' }}>
+                        {/* Photo A */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 700, color: '#90CAF9' }}>
+                            ANTES — {new Date(metricA.measured_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })} ({metricA.weight} kg)
+                          </span>
+                          <div style={{
+                            width: '100%',
+                            minHeight: '260px',
+                            maxHeight: '400px',
+                            borderRadius: '16px',
+                            backgroundColor: 'rgba(0,0,0,0.3)',
+                            border: '1px solid var(--md-sys-color-outline-variant)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            overflow: 'hidden'
+                          }}>
+                            {angle.photoA ? (
+                              <img
+                                src={angle.photoA}
+                                alt={`Foto ${angle.label} Antes`}
+                                style={{ width: '100%', height: '100%', objectFit: 'contain', maxHeight: '400px' }}
+                                onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'flex'; }}
+                              />
+                            ) : null}
+                            <div style={{
+                              display: angle.photoA ? 'none' : 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              gap: '8px',
+                              color: 'var(--md-sys-color-tertiary)',
+                              padding: '20px',
+                              textAlign: 'center'
+                            }}>
+                              <ImageIcon size={36} opacity={0.4} />
+                              <span style={{ fontSize: '12.5px' }}>Sin fotografía frontal registrada para esta fecha.</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Photo B */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 700, color: '#81C784' }}>
+                            DESPUÉS — {new Date(metricB.measured_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })} ({metricB.weight} kg)
+                          </span>
+                          <div style={{
+                            width: '100%',
+                            minHeight: '260px',
+                            maxHeight: '400px',
+                            borderRadius: '16px',
+                            backgroundColor: 'rgba(0,0,0,0.3)',
+                            border: '1px solid var(--md-sys-color-outline-variant)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            overflow: 'hidden'
+                          }}>
+                            {angle.photoB ? (
+                              <img
+                                src={angle.photoB}
+                                alt={`Foto ${angle.label} Después`}
+                                style={{ width: '100%', height: '100%', objectFit: 'contain', maxHeight: '400px' }}
+                                onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'flex'; }}
+                              />
+                            ) : null}
+                            <div style={{
+                              display: angle.photoB ? 'none' : 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              gap: '8px',
+                              color: 'var(--md-sys-color-tertiary)',
+                              padding: '20px',
+                              textAlign: 'center'
+                            }}>
+                              <ImageIcon size={36} opacity={0.4} />
+                              <span style={{ fontSize: '12.5px' }}>Sin fotografía para esta fecha de evaluación.</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Perimeters Comparison Table */}
+                <div className="md-card" style={{ padding: '24px' }}>
+                  <h4 style={{ fontSize: '16px', fontWeight: 700, color: '#FFF', marginBottom: '16px' }}>
+                    Tabla Comparativa de Perímetros Anatómicos
+                  </h4>
+                  <div className="scroll-touch-container">
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13.5px' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--md-sys-color-outline-variant)', textAlign: 'left', color: 'var(--md-sys-color-tertiary)' }}>
+                          <th style={{ padding: '10px' }}>Medición</th>
+                          <th style={{ padding: '10px' }}>Antes ({new Date(metricA.measured_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })})</th>
+                          <th style={{ padding: '10px' }}>Después ({new Date(metricB.measured_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })})</th>
+                          <th style={{ padding: '10px' }}>Variación Neta (Δ)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[
+                          { name: 'Peso Corporal', a: metricA.weight ? `${metricA.weight} kg` : '--', b: metricB.weight ? `${metricB.weight} kg` : '--', diff: diffWeight },
+                          { name: '% Grasa Corporal', a: metricA.body_fat_percentage ? `${metricA.body_fat_percentage}%` : '--', b: metricB.body_fat_percentage ? `${metricB.body_fat_percentage}%` : '--', diff: diffFat },
+                          { name: 'Cintura', a: metricA.waist_cm ? `${metricA.waist_cm} cm` : '--', b: metricB.waist_cm ? `${metricB.waist_cm} cm` : '--', diff: diffWaist },
+                          { name: 'Cadera', a: metricA.hip_cm ? `${metricA.hip_cm} cm` : '--', b: metricB.hip_cm ? `${metricB.hip_cm} cm` : '--', diff: diffHip },
+                          { name: 'Pecho / Tórax', a: metricA.chest_cm ? `${metricA.chest_cm} cm` : '--', b: metricB.chest_cm ? `${metricB.chest_cm} cm` : '--', diff: diffChest },
+                          { name: 'Brazo', a: metricA.arm_cm ? `${metricA.arm_cm} cm` : '--', b: metricB.arm_cm ? `${metricB.arm_cm} cm` : '--', diff: diffArm },
+                          { name: 'Muslo', a: metricA.thigh_cm ? `${metricA.thigh_cm} cm` : '--', b: metricB.thigh_cm ? `${metricB.thigh_cm} cm` : '--', diff: diffThigh }
+                        ].map((row, rIdx) => (
+                          <tr key={rIdx} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                            <td style={{ padding: '12px 10px', color: '#FFF', fontWeight: 600 }}>{row.name}</td>
+                            <td style={{ padding: '12px 10px', color: 'var(--md-sys-color-on-surface)' }}>{row.a}</td>
+                            <td style={{ padding: '12px 10px', color: '#FFF', fontWeight: 700 }}>{row.b}</td>
+                            <td style={{ padding: '12px 10px' }}>
+                              {row.diff ? (
+                                <span style={{ fontWeight: 700, color: row.diff.color }}>
+                                  {row.diff.text}
+                                </span>
+                              ) : (
+                                <span style={{ color: 'var(--md-sys-color-tertiary)' }}>--</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      )}
+
       {/* Modal: New Metric */}
       {showModal && (
         <div style={modalBackdropStyle} onClick={() => setShowModal(false)}>
@@ -1220,6 +1660,109 @@ export const ProgressView = () => {
                     onChange={(e) => setMuscleMass(e.target.value)}
                     style={inputStyle}
                   />
+                </div>
+              </div>
+
+              {/* Perímetros Anatómicos (cm) */}
+              <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: '16px', marginTop: '4px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#DEEAC1', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '12px' }}>
+                  Perímetros Anatómicos (cm, Opcional)
+                </span>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
+                  <div>
+                    <label style={{ ...labelStyle, fontSize: '12px' }}>Cintura</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      placeholder="Ej: 82"
+                      value={waist}
+                      onChange={(e) => setWaist(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, fontSize: '12px' }}>Cadera</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      placeholder="Ej: 98"
+                      value={hip}
+                      onChange={(e) => setHip(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, fontSize: '12px' }}>Pecho / Tórax</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      placeholder="Ej: 104"
+                      value={chest}
+                      onChange={(e) => setChest(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, fontSize: '12px' }}>Brazo</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      placeholder="Ej: 36"
+                      value={arm}
+                      onChange={(e) => setArm(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, fontSize: '12px' }}>Muslo</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      placeholder="Ej: 58"
+                      value={thigh}
+                      onChange={(e) => setThigh(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Fotografías de Progreso (URLs) */}
+              <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: '16px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#DEEAC1', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '12px' }}>
+                  Fotografías de Progreso (URLs, Opcional)
+                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div>
+                    <label style={{ ...labelStyle, fontSize: '12px' }}>Foto Frontal (URL)</label>
+                    <input
+                      type="url"
+                      placeholder="https://ejemplo.com/fotos/frontal.jpg"
+                      value={photoFront}
+                      onChange={(e) => setPhotoFront(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, fontSize: '12px' }}>Foto Lateral / Perfil (URL)</label>
+                    <input
+                      type="url"
+                      placeholder="https://ejemplo.com/fotos/lateral.jpg"
+                      value={photoSide}
+                      onChange={(e) => setPhotoSide(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, fontSize: '12px' }}>Foto Posterior / Espalda (URL)</label>
+                    <input
+                      type="url"
+                      placeholder="https://ejemplo.com/fotos/espalda.jpg"
+                      value={photoBack}
+                      onChange={(e) => setPhotoBack(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -1307,7 +1850,9 @@ const modalBackdropStyle = {
 
 const modalBoxStyle = {
   width: '100%',
-  maxWidth: '520px',
+  maxWidth: '620px',
+  maxHeight: '92vh',
+  overflowY: 'auto',
   backgroundColor: 'var(--md-sys-color-surface)',
   borderRadius: '24px',
   border: '1px solid var(--md-sys-color-outline-variant)',
