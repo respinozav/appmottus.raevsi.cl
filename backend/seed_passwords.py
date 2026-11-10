@@ -34,10 +34,27 @@ try:
         db.add(coach_user)
         print("Created Coach user 2-7 with password 'Coach123!'")
 
+    custom_admin = db.query(User).filter(User.rut == "15342806-9").first()
+    if custom_admin:
+        custom_admin.password_hash = get_password_hash("12345678")
+        custom_admin.role = "admin"
+        print("Updated Admin 15342806-9 password to '12345678'")
+    else:
+        custom_admin = User(
+            rut="15342806-9",
+            email="admin.15342806@mottus.cl",
+            name="Coach / Admin Mottus",
+            role="admin",
+            password_hash=get_password_hash("12345678")
+        )
+        db.add(custom_admin)
+        print("Created Admin user 15342806-9 with password '12345678'")
+
     db.commit()
     print("Default seed users ready:")
     print("Admin: RUT: 1-9 | Pass: Admin123!")
     print("Coach: RUT: 2-7 | Pass: Coach123!")
+    print("Admin: RUT: 15342806-9 | Pass: 12345678")
 finally:
     db.close()
 
