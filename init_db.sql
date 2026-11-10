@@ -191,6 +191,13 @@ CREATE TABLE IF NOT EXISTS bdmottus.direct_messages (
 CREATE INDEX IF NOT EXISTS idx_direct_messages_conversation ON bdmottus.direct_messages (student_id, coach_id, created_at ASC);
 CREATE INDEX IF NOT EXISTS idx_direct_messages_unread ON bdmottus.direct_messages (student_id, coach_id, is_read) WHERE is_read = FALSE;
 
+-- Ampliación Perfil TrueCoach Alumnos (Fase Perfil)
+ALTER TABLE bdmottus.students
+ADD COLUMN IF NOT EXISTS last_name VARCHAR(100),
+ADD COLUMN IF NOT EXISTS birth_date DATE,
+ADD COLUMN IF NOT EXISTS location VARCHAR(150),
+ADD COLUMN IF NOT EXISTS unit_preference VARCHAR(20) DEFAULT 'metric' NOT NULL;
+
 -- Reotorgar permisos a las tablas recién creadas a usr_mottus
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA bdmottus TO usr_mottus;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA bdmottus TO usr_mottus;

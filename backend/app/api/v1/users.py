@@ -122,11 +122,20 @@ def complete_registration(data: StudentCompleteRegistration, db: Session = Depen
         student.email = email_clean
 
     student.name = data.name.strip()
+    if data.last_name:
+        student.last_name = data.last_name.strip()
     student.gender = data.gender
     student.phone = data.phone.strip()
     student.password_hash = get_password_hash(data.password)
     student.weight = data.weight
     student.height = data.height
+    if data.birth_date:
+        student.birth_date = data.birth_date
+    if data.location:
+        student.location = data.location.strip()
+    if data.unit_preference:
+        student.unit_preference = data.unit_preference.strip().lower()
+
     student.is_registered = True
     student.registration_token = None # Invalidar token tras activación
 

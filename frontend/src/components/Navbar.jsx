@@ -37,8 +37,15 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
   const openProfileModal = () => {
     setProfileForm({
       name: user?.name || '',
+      last_name: user?.last_name || '',
       email: user?.email || '',
       phone: user?.phone || '',
+      gender: user?.gender || 'Masculino',
+      birth_date: user?.birth_date || '',
+      location: user?.location || '',
+      unit_preference: user?.unit_preference || 'metric',
+      weight: user?.weight || '',
+      height: user?.height || '',
       current_password: '',
       new_password: ''
     });
@@ -54,8 +61,15 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
     try {
       const payload = {
         name: profileForm.name.trim() || undefined,
+        last_name: profileForm.last_name?.trim() || undefined,
         email: profileForm.email.trim() || undefined,
-        phone: profileForm.phone.trim() || undefined,
+        phone: profileForm.phone?.trim() || undefined,
+        gender: profileForm.gender || undefined,
+        birth_date: profileForm.birth_date || undefined,
+        location: profileForm.location?.trim() || undefined,
+        unit_preference: profileForm.unit_preference || undefined,
+        weight: profileForm.weight ? parseFloat(profileForm.weight) : undefined,
+        height: profileForm.height ? parseFloat(profileForm.height) : undefined
       };
 
       if (profileForm.new_password) {
@@ -391,7 +405,9 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
         }}>
           <div className="glass-panel" style={{
             width: '100%',
-            maxWidth: '460px',
+            maxWidth: '540px',
+            maxHeight: '90vh',
+            overflowY: 'auto',
             backgroundColor: 'var(--md-sys-color-surface-container-high)',
             borderRadius: '20px',
             padding: '24px',
@@ -452,68 +468,231 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
             )}
 
             <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div>
-                <label style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block', marginBottom: '4px' }}>
-                  Nombre Completo
-                </label>
-                <input
-                  type="text"
-                  value={profileForm.name}
-                  onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: '10px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    color: '#FFF',
-                    fontSize: '14px'
-                  }}
-                  placeholder="Tu nombre completo"
-                />
+              {/* Nombre y Apellido */}
+              <div className="responsive-grid-2col" style={{ gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block', marginBottom: '4px' }}>
+                    Nombre
+                  </label>
+                  <input
+                    type="text"
+                    value={profileForm.name}
+                    onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      color: '#FFF',
+                      fontSize: '14px'
+                    }}
+                    placeholder="Tu nombre"
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block', marginBottom: '4px' }}>
+                    Apellido
+                  </label>
+                  <input
+                    type="text"
+                    value={profileForm.last_name || ''}
+                    onChange={(e) => setProfileForm({ ...profileForm, last_name: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      color: '#FFF',
+                      fontSize: '14px'
+                    }}
+                    placeholder="Tu apellido"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block', marginBottom: '4px' }}>
-                  Correo Electrónico
-                </label>
-                <input
-                  type="email"
-                  value={profileForm.email}
-                  onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: '10px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    color: '#FFF',
-                    fontSize: '14px'
-                  }}
-                  placeholder="correo@ejemplo.com"
-                />
+              {/* Correo y Teléfono */}
+              <div className="responsive-grid-2col" style={{ gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block', marginBottom: '4px' }}>
+                    Correo Electrónico
+                  </label>
+                  <input
+                    type="email"
+                    value={profileForm.email}
+                    onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      color: '#FFF',
+                      fontSize: '14px'
+                    }}
+                    placeholder="correo@ejemplo.com"
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block', marginBottom: '4px' }}>
+                    Teléfono / WhatsApp
+                  </label>
+                  <input
+                    type="text"
+                    value={profileForm.phone}
+                    onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      color: '#FFF',
+                      fontSize: '14px'
+                    }}
+                    placeholder="+56 9 1234 5678"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block', marginBottom: '4px' }}>
-                  Teléfono / WhatsApp
-                </label>
-                <input
-                  type="text"
-                  value={profileForm.phone}
-                  onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: '10px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    color: '#FFF',
-                    fontSize: '14px'
-                  }}
-                  placeholder="+56 9 1234 5678"
-                />
-              </div>
+              {/* Campos específicos de Alumno (TrueCoach Profile) */}
+              {user?.role === 'user' && (
+                <>
+                  <div className="responsive-grid-2col" style={{ gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block', marginBottom: '4px' }}>
+                        Fecha de Nacimiento
+                      </label>
+                      <input
+                        type="date"
+                        value={profileForm.birth_date || ''}
+                        onChange={(e) => setProfileForm({ ...profileForm, birth_date: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          borderRadius: '10px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          color: '#FFF',
+                          fontSize: '14px'
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block', marginBottom: '4px' }}>
+                        Ciudad / Ubicación
+                      </label>
+                      <input
+                        type="text"
+                        value={profileForm.location || ''}
+                        onChange={(e) => setProfileForm({ ...profileForm, location: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          borderRadius: '10px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          color: '#FFF',
+                          fontSize: '14px'
+                        }}
+                        placeholder="Ej: Santiago, Chile"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="responsive-grid-2col" style={{ gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block', marginBottom: '4px' }}>
+                        Género / Sexo
+                      </label>
+                      <select
+                        value={profileForm.gender || 'Masculino'}
+                        onChange={(e) => setProfileForm({ ...profileForm, gender: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          borderRadius: '10px',
+                          backgroundColor: 'var(--md-sys-color-surface-variant)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          color: '#FFF',
+                          fontSize: '14px'
+                        }}
+                      >
+                        <option value="Masculino">Masculino</option>
+                        <option value="Femenino">Femenino</option>
+                        <option value="Otro">Otro</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block', marginBottom: '4px' }}>
+                        Preferencia de Unidades
+                      </label>
+                      <select
+                        value={profileForm.unit_preference || 'metric'}
+                        onChange={(e) => setProfileForm({ ...profileForm, unit_preference: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          borderRadius: '10px',
+                          backgroundColor: 'var(--md-sys-color-surface-variant)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          color: '#FFF',
+                          fontSize: '14px'
+                        }}
+                      >
+                        <option value="metric">Métrico (kg / cm)</option>
+                        <option value="imperial">Imperial (lbs / in)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="responsive-grid-2col" style={{ gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block', marginBottom: '4px' }}>
+                        Peso Actual ({profileForm.unit_preference === 'imperial' ? 'lbs' : 'kg'})
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={profileForm.weight || ''}
+                        onChange={(e) => setProfileForm({ ...profileForm, weight: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          borderRadius: '10px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          color: '#FFF',
+                          fontSize: '14px'
+                        }}
+                        placeholder={profileForm.unit_preference === 'imperial' ? '165' : '75'}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block', marginBottom: '4px' }}>
+                        Estatura ({profileForm.unit_preference === 'imperial' ? 'in' : 'cm'})
+                      </label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={profileForm.height || ''}
+                        onChange={(e) => setProfileForm({ ...profileForm, height: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          borderRadius: '10px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          color: '#FFF',
+                          fontSize: '14px'
+                        }}
+                        placeholder={profileForm.unit_preference === 'imperial' ? '68' : '175'}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div style={{
                 marginTop: '6px',

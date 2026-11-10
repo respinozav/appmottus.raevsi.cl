@@ -116,8 +116,24 @@ def update_my_profile(
 
     if data.name is not None and data.name.strip():
         current_user.name = data.name.strip()
+    if data.last_name is not None:
+        current_user.last_name = data.last_name.strip() if data.last_name else None
     if data.phone is not None:
         current_user.phone = data.phone.strip()
+
+    if isinstance(current_user, Student):
+        if data.gender is not None:
+            current_user.gender = data.gender
+        if data.birth_date is not None:
+            current_user.birth_date = data.birth_date
+        if data.location is not None:
+            current_user.location = data.location.strip() if data.location else None
+        if data.unit_preference is not None:
+            current_user.unit_preference = data.unit_preference.strip().lower()
+        if data.weight is not None:
+            current_user.weight = data.weight
+        if data.height is not None:
+            current_user.height = data.height
 
     db.commit()
     db.refresh(current_user)

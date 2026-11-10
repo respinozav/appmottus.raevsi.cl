@@ -34,10 +34,14 @@ class StudentBase(BaseModel):
     rut: str
     email: Optional[EmailStr] = None
     name: Optional[str] = None
+    last_name: Optional[str] = None
     gender: Optional[str] = None
     phone: Optional[str] = None
     weight: Optional[float] = None
     height: Optional[float] = None
+    birth_date: Optional[date] = None
+    location: Optional[str] = None
+    unit_preference: Optional[str] = "metric"
 
 class StudentCreateByCoach(BaseModel):
     rut: str
@@ -45,20 +49,28 @@ class StudentCreateByCoach(BaseModel):
 class StudentCompleteRegistration(BaseModel):
     token: str
     name: str
+    last_name: Optional[str] = None
     gender: str
     phone: str
     password: str
     weight: float
     height: float
     email: Optional[EmailStr] = None
+    birth_date: Optional[date] = None
+    location: Optional[str] = None
+    unit_preference: Optional[str] = "metric"
 
 class StudentOut(BaseModel):
     id: UUID
     rut: str
     email: Optional[str] = None
     name: Optional[str] = None
+    last_name: Optional[str] = None
     gender: Optional[str] = None
     phone: Optional[str] = None
+    birth_date: Optional[date] = None
+    location: Optional[str] = None
+    unit_preference: Optional[str] = "metric"
     weight: Optional[float] = None
     height: Optional[float] = None
     role: str = "user"
@@ -99,8 +111,15 @@ class StudentCoachSettingsUpdate(BaseModel):
 
 class UserProfileUpdate(BaseModel):
     name: Optional[str] = None
+    last_name: Optional[str] = None
     email: Optional[EmailStr] = None
+    gender: Optional[str] = None
     phone: Optional[str] = None
+    birth_date: Optional[date] = None
+    location: Optional[str] = None
+    unit_preference: Optional[str] = None
+    weight: Optional[float] = None
+    height: Optional[float] = None
     current_password: Optional[str] = None
     new_password: Optional[str] = None
 

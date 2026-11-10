@@ -278,6 +278,11 @@ EOF
         python migrate_truecoach_phase3.py || echo "Aviso: migración TrueCoach Fase 3 omitida o ya aplicada"
     fi
 
+    if [ -f "migrate_truecoach_profile.py" ]; then
+        echo "Ejecutando migración de esquema TrueCoach Perfil (last_name, birth_date, location, unit_preference)..."
+        python migrate_truecoach_profile.py || echo "Aviso: migración TrueCoach Perfil omitida o ya aplicada"
+    fi
+
     ########################################
     # SEED USERS & PASSWORDS
     ########################################

@@ -11,10 +11,14 @@ export const RegisterView = ({ token, onRegistered }) => {
 
   // Form Fields
   const [name, setName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [gender, setGender] = useState('Masculino');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [location, setLocation] = useState('');
+  const [unitPreference, setUnitPreference] = useState('metric'); // 'metric' | 'imperial'
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
 
@@ -43,13 +47,17 @@ export const RegisterView = ({ token, onRegistered }) => {
     try {
       await api.post('/users/complete-registration', {
         token,
-        name,
+        name: name.trim(),
+        last_name: lastName.trim(),
         gender,
-        phone,
-        email: email ? email.trim() : null,
+        phone: phone.trim(),
+        email: email.trim(),
         password,
         weight: parseFloat(weight),
         height: parseFloat(height),
+        birth_date: birthDate || null,
+        location: location.trim(),
+        unit_preference: unitPreference
       });
 
       setSuccess(true);
@@ -163,37 +171,52 @@ export const RegisterView = ({ token, onRegistered }) => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface)', marginBottom: '6px' }}>
-              Nombre Completo *
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Ej: Camilo Pérez"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Nombre y Apellido */}
           <div className="responsive-grid-2col">
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface)', marginBottom: '6px' }}>
-                Sexo *
+                Nombre *
               </label>
-              <select
-                value={gender}
-                onChange={(e) => setGender(e.target.value)}
+              <input
+                type="text"
+                required
+                placeholder="Ej: Camilo"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 style={inputStyle}
-              >
-                <option value="Masculino">Masculino</option>
-                <option value="Femenino">Femenino</option>
-                <option value="Otro">Otro</option>
-              </select>
+              />
             </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface)', marginBottom: '6px' }}>
+                Apellido *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Ej: Pérez González"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
+          </div>
 
+          {/* Correo y Celular */}
+          <div className="responsive-grid-2col">
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface)', marginBottom: '6px' }}>
+                Correo Electrónico *
+              </label>
+              <input
+                type="email"
+                required
+                placeholder="ejemplo@mottus.cl"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface)', marginBottom: '6px' }}>
                 Celular / WhatsApp *
@@ -209,16 +232,77 @@ export const RegisterView = ({ token, onRegistered }) => {
             </div>
           </div>
 
+          {/* Cumpleaños y Ubicación */}
           <div className="responsive-grid-2col">
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface)', marginBottom: '6px' }}>
-                Peso Actual (kg) *
+                Fecha de Nacimiento *
+              </label>
+              <input
+                type="date"
+                required
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface)', marginBottom: '6px' }}>
+                Ciudad / Ubicación *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Ej: Santiago, Chile"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
+          </div>
+
+          {/* Sexo y Preferencia de Unidades */}
+          <div className="responsive-grid-2col">
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface)', marginBottom: '6px' }}>
+                Género / Sexo *
+              </label>
+              <select
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+                style={inputStyle}
+              >
+                <option value="Masculino">Masculino</option>
+                <option value="Femenino">Femenino</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface)', marginBottom: '6px' }}>
+                Sistema de Unidades *
+              </label>
+              <select
+                value={unitPreference}
+                onChange={(e) => setUnitPreference(e.target.value)}
+                style={inputStyle}
+              >
+                <option value="metric">Métrico (kg / cm)</option>
+                <option value="imperial">Imperial (lbs / in)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Peso y Estatura con Unidades Dinámicas */}
+          <div className="responsive-grid-2col">
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface)', marginBottom: '6px' }}>
+                Peso Actual ({unitPreference === 'metric' ? 'kg' : 'lbs'}) *
               </label>
               <input
                 type="number"
                 step="0.1"
                 required
-                placeholder="75.5"
+                placeholder={unitPreference === 'metric' ? '75.5' : '166.4'}
                 value={weight}
                 onChange={(e) => setWeight(e.target.value)}
                 style={inputStyle}
@@ -227,13 +311,13 @@ export const RegisterView = ({ token, onRegistered }) => {
 
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface)', marginBottom: '6px' }}>
-                Estatura (cm) *
+                Estatura ({unitPreference === 'metric' ? 'cm' : 'in'}) *
               </label>
               <input
                 type="number"
                 step="0.5"
                 required
-                placeholder="175"
+                placeholder={unitPreference === 'metric' ? '175' : '68.9'}
                 value={height}
                 onChange={(e) => setHeight(e.target.value)}
                 style={inputStyle}
@@ -241,19 +325,7 @@ export const RegisterView = ({ token, onRegistered }) => {
             </div>
           </div>
 
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface)', marginBottom: '6px' }}>
-              Correo Electrónico (Opcional)
-            </label>
-            <input
-              type="email"
-              placeholder="ejemplo@mottus.cl"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-
+          {/* Contraseña */}
           <div>
             <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface)', marginBottom: '6px' }}>
               Crea tu Contraseña de Acceso *
