@@ -60,3 +60,4 @@ print("   -> Permisos verificados con éxito.")
 cur.close()
 conn.close()
 print("--- MIGRACIÓN TRUECOACH PROFILE COMPLETADA EXITOSAMENTE AL 100% ---")
+

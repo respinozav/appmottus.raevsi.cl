@@ -51,6 +51,7 @@ lerna-debug.log*
 # Despliegue en Servidor (logs y backups generados por deploy.sh)
 logs/
 backup/
+manual_assets/
 
 # Sistema Operativo y Editores
 .DS_Store
