@@ -1,5 +1,5 @@
 import secrets
-from typing import List, Optional
+from typing import List, Optional, Union
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
