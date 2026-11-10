@@ -1,5 +1,5 @@
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional, List
 from pydantic import BaseModel, EmailStr, Field
 
@@ -63,10 +63,33 @@ class StudentOut(BaseModel):
     height: Optional[float] = None
     role: str = "user"
     is_registered: bool
+    plan_name: Optional[str] = "Plan Estándar"
+    membership_expires_at: Optional[date] = None
+    is_active: bool = True
+    daily_kcal_target: Optional[int] = None
+    daily_protein_target: Optional[int] = None
+    daily_steps_target: Optional[int] = None
+    daily_water_liters_target: Optional[float] = None
     created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
+
+class StudentCoachSettingsUpdate(BaseModel):
+    plan_name: Optional[str] = None
+    membership_expires_at: Optional[date] = None
+    is_active: Optional[bool] = None
+    daily_kcal_target: Optional[int] = None
+    daily_protein_target: Optional[int] = None
+    daily_steps_target: Optional[int] = None
+    daily_water_liters_target: Optional[float] = None
+
+class UserProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    current_password: Optional[str] = None
+    new_password: Optional[str] = None
 
 class StudentWithTokenOut(BaseModel):
     id: UUID
@@ -314,3 +337,84 @@ class ExerciseStrengthAnalysis(BaseModel):
     total_volume_lifted: float
     total_sessions_count: int
     sessions: List[ExerciseHistorySession]
+
+# Workout Templates (TrueCoach Phase 2)
+class RoutineTemplateExerciseCreate(BaseModel):
+    exercise_id: UUID
+    order_index: Optional[int] = 1
+    superset_group: Optional[str] = None
+    series: Optional[int] = 3
+    repetitions: Optional[str] = "12 reps"
+    rest_seconds: Optional[int] = 60
+    target_weight: Optional[float] = None
+    target_rpe: Optional[float] = None
+    tempo: Optional[str] = None
+    coach_notes: Optional[str] = None
+
+class RoutineTemplateExerciseOut(BaseModel):
+    id: UUID
+    template_id: UUID
+    exercise_id: UUID
+    exercise_name: Optional[str] = None
+    order_index: int
+    superset_group: Optional[str] = None
+    series: int
+    repetitions: str
+    rest_seconds: int
+    target_weight: Optional[float] = None
+    target_rpe: Optional[float] = None
+    tempo: Optional[str] = None
+    coach_notes: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class RoutineTemplateCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    category_tag: Optional[str] = "General"
+    exercises: List[RoutineTemplateExerciseCreate] = []
+
+class RoutineTemplateSaveFromExisting(BaseModel):
+    title: str
+    description: Optional[str] = None
+    category_tag: Optional[str] = "General"
+
+class RoutineTemplateOut(BaseModel):
+    id: UUID
+    coach_id: UUID
+    coach_name: Optional[str] = None
+    title: str
+    description: Optional[str] = None
+    category_tag: str
+    created_at: Optional[datetime] = None
+    template_exercises: List[RoutineTemplateExerciseOut] = []
+
+    class Config:
+        from_attributes = True
+
+# Daily Habits & Nutrition (TrueCoach Phase 2)
+class HabitLogCreate(BaseModel):
+    log_date: Optional[date] = None
+    kcal_consumed: Optional[int] = None
+    protein_grams: Optional[int] = None
+    water_liters: Optional[float] = None
+    steps: Optional[int] = None
+    sleep_hours: Optional[float] = None
+    notes: Optional[str] = None
+
+class HabitLogOut(BaseModel):
+    id: UUID
+    student_id: UUID
+    log_date: date
+    kcal_consumed: Optional[int] = None
+    protein_grams: Optional[int] = None
+    water_liters: Optional[float] = None
+    steps: Optional[int] = None
+    sleep_hours: Optional[float] = None
+    notes: Optional[str] = None
+    logged_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

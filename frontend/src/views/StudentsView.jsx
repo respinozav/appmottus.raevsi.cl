@@ -10,7 +10,18 @@ import {
   Activity, 
   Dumbbell, 
   Flame, 
-  Award
+  Award,
+  Sliders,
+  Calendar,
+  Droplets,
+  Footprints,
+  Moon,
+  Utensils,
+  AlertTriangle,
+  ShieldCheck,
+  Settings,
+  X,
+  Heart
 } from 'lucide-react';
 import api from '../services/api';
 
@@ -34,10 +45,25 @@ export const StudentsView = () => {
   const [savingMetric, setSavingMetric] = useState(false);
   const [metricError, setMetricError] = useState('');
 
+  // Coach Settings & Membership Modal
+  const [showCoachSettingsModal, setShowCoachSettingsModal] = useState(false);
+  const [selectedStudentForSettings, setSelectedStudentForSettings] = useState(null);
+  const [coachSettingsForm, setCoachSettingsForm] = useState({
+    plan_name: 'Plan Estándar',
+    membership_expires_at: '',
+    is_active: true,
+    daily_kcal_target: '',
+    daily_protein_target: '',
+    daily_steps_target: '',
+    daily_water_liters_target: ''
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsError, setSettingsError] = useState('');
+
   // Student Progress & History Modal
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [progressStudent, setProgressStudent] = useState(null);
-  const [progressActiveTab, setProgressActiveTab] = useState('body'); // 'body' | 'strength'
+  const [progressActiveTab, setProgressActiveTab] = useState('body'); // 'body' | 'strength' | 'habits'
   
   // Body metrics tab state
   const [studentMetrics, setStudentMetrics] = useState([]);
@@ -49,6 +75,10 @@ export const StudentsView = () => {
   const [selectedExerciseId, setSelectedExerciseId] = useState('');
   const [strengthAnalysis, setStrengthAnalysis] = useState(null);
   const [loadingStrength, setLoadingStrength] = useState(false);
+
+  // Habits tab state
+  const [studentHabits, setStudentHabits] = useState([]);
+  const [loadingStudentHabits, setLoadingStudentHabits] = useState(false);
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -117,12 +147,105 @@ export const StudentsView = () => {
     }
   };
 
+  // Open Coach Settings & Membership Modal
+  const handleOpenCoachSettings = (student) => {
+    setSelectedStudentForSettings(student);
+    setCoachSettingsForm({
+      plan_name: student.plan_name || 'Plan Estándar',
+      membership_expires_at: student.membership_expires_at || '',
+      is_active: student.is_active !== undefined ? student.is_active : true,
+      daily_kcal_target: student.daily_kcal_target || '',
+      daily_protein_target: student.daily_protein_target || '',
+      daily_steps_target: student.daily_steps_target || '',
+      daily_water_liters_target: student.daily_water_liters_target || ''
+    });
+    setSettingsError('');
+    setShowCoachSettingsModal(true);
+  };
+
+  const handleSaveCoachSettings = async (e) => {
+    e.preventDefault();
+    if (!selectedStudentForSettings) return;
+    setSavingSettings(true);
+    setSettingsError('');
+
+    try {
+      const payload = {
+        plan_name: coachSettingsForm.plan_name.trim() || 'Plan Estándar',
+        membership_expires_at: coachSettingsForm.membership_expires_at || null,
+        is_active: Boolean(coachSettingsForm.is_active),
+        daily_kcal_target: coachSettingsForm.daily_kcal_target ? parseInt(coachSettingsForm.daily_kcal_target) : null,
+        daily_protein_target: coachSettingsForm.daily_protein_target ? parseInt(coachSettingsForm.daily_protein_target) : null,
+        daily_steps_target: coachSettingsForm.daily_steps_target ? parseInt(coachSettingsForm.daily_steps_target) : null,
+        daily_water_liters_target: coachSettingsForm.daily_water_liters_target ? parseFloat(coachSettingsForm.daily_water_liters_target) : null,
+      };
+
+      await api.patch(`/users/students/${selectedStudentForSettings.id}/coach-settings`, payload);
+      setShowCoachSettingsModal(false);
+      fetchStudents();
+    } catch (err) {
+      setSettingsError(err.response?.data?.detail || 'Error al guardar la configuración del alumno.');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const getMembershipBadge = (student) => {
+    if (!student.is_active) {
+      return {
+        label: 'Membresía Suspendida',
+        bg: 'rgba(255, 180, 171, 0.15)',
+        border: '1px solid var(--md-sys-color-error)',
+        color: 'var(--md-sys-color-error)'
+      };
+    }
+
+    if (!student.membership_expires_at) {
+      return {
+        label: `${student.plan_name || 'Plan Estándar'} · Sin vencimiento`,
+        bg: 'rgba(110, 136, 66, 0.12)',
+        border: '1px solid rgba(110, 136, 66, 0.25)',
+        color: 'var(--md-sys-color-on-surface-variant)'
+      };
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const [y, m, d] = student.membership_expires_at.split('-').map(Number);
+    const expDate = new Date(y, m - 1, d);
+    const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      return {
+        label: `${student.plan_name || 'Plan'} · Vencida (${Math.abs(diffDays)}d)`,
+        bg: 'rgba(255, 180, 171, 0.2)',
+        border: '1px solid var(--md-sys-color-error)',
+        color: 'var(--md-sys-color-error)'
+      };
+    } else if (diffDays <= 7) {
+      return {
+        label: `${student.plan_name || 'Plan'} · Vence en ${diffDays} día${diffDays === 1 ? '' : 's'}`,
+        bg: 'rgba(255, 183, 77, 0.15)',
+        border: '1px solid #FFB74D',
+        color: '#FFB74D'
+      };
+    } else {
+      return {
+        label: `${student.plan_name || 'Plan'} · Vigente (${diffDays}d)`,
+        bg: 'rgba(110, 136, 66, 0.25)',
+        border: '1px solid rgba(137, 168, 84, 0.5)',
+        color: '#DEEAC1'
+      };
+    }
+  };
+
   // Open Progress / History Modal
   const handleOpenProgressModal = async (student) => {
     setProgressStudent(student);
     setShowProgressModal(true);
     setProgressActiveTab('body');
     setLoadingStudentMetrics(true);
+    setLoadingStudentHabits(true);
 
     try {
       // 1. Fetch body metrics
@@ -140,10 +263,15 @@ export const StudentsView = () => {
         setSelectedExerciseId(allExercises[0].id);
         loadStrengthAnalysis(student.id, allExercises[0].id);
       }
+
+      // 3. Fetch habits history
+      const hRes = await api.get(`/metrics/habits/${student.id}`);
+      setStudentHabits(hRes.data);
     } catch (err) {
       console.error('Error al cargar progreso del alumno:', err);
     } finally {
       setLoadingStudentMetrics(false);
+      setLoadingStudentHabits(false);
     }
   };
 
@@ -503,8 +631,8 @@ export const StudentsView = () => {
                     border: '1px solid var(--md-sys-color-outline-variant)'
                   }}
                 >
-                  <div style={{ flex: '1 1 200px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    <div style={{ flex: '1 1 200px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '15px', fontWeight: 700, color: '#FFF' }}>
                         {student.name || 'Registro Pendiente'}
                       </span>
@@ -517,8 +645,26 @@ export const StudentsView = () => {
                         color: student.is_registered ? 'var(--md-sys-color-on-secondary-container)' : 'var(--md-sys-color-error)',
                         border: student.is_registered ? '1px solid var(--md-sys-color-secondary)' : '1px solid var(--md-sys-color-error)'
                       }}>
-                        {student.is_registered ? 'Activo' : 'Pendiente Activación'}
+                        {student.is_registered ? 'Registrado' : 'Pendiente Activación'}
                       </span>
+
+                      {/* TrueCoach Phase 2: Membership Badge */}
+                      {(() => {
+                        const mb = getMembershipBadge(student);
+                        return (
+                          <span style={{
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            backgroundColor: mb.bg,
+                            border: mb.border,
+                            color: mb.color
+                          }}>
+                            {mb.label}
+                          </span>
+                        );
+                      })()}
                     </div>
 
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 14px', marginTop: '6px', fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}>
@@ -527,9 +673,41 @@ export const StudentsView = () => {
                       {student.weight && <span><strong>Peso:</strong> {student.weight} kg</span>}
                       {student.height && <span><strong>Estatura:</strong> {student.height} cm</span>}
                     </div>
+
+                    {/* Metas configuradas por el Coach */}
+                    {(student.daily_kcal_target || student.daily_protein_target || student.daily_steps_target || student.daily_water_liters_target) && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '6px', fontSize: '11px', color: 'var(--md-sys-color-primary-light)' }}>
+                        {student.daily_kcal_target && <span>🎯 {student.daily_kcal_target} kcal</span>}
+                        {student.daily_protein_target && <span>🥩 {student.daily_protein_target}g prot</span>}
+                        {student.daily_water_liters_target && <span>💧 {student.daily_water_liters_target}L agua</span>}
+                        {student.daily_steps_target && <span>👟 {student.daily_steps_target.toLocaleString()} pasos</span>}
+                      </div>
+                    )}
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    {/* Botón Configurar Plan & Hábitos */}
+                    <button
+                      onClick={() => handleOpenCoachSettings(student)}
+                      title="Configurar Plan de Membresía y Metas de Hábitos"
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        backgroundColor: 'rgba(110, 136, 66, 0.15)',
+                        border: '1px solid rgba(110, 136, 66, 0.35)',
+                        color: '#DEEAC1',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '12px',
+                        fontWeight: 600
+                      }}
+                    >
+                      <Settings size={14} />
+                      Plan & Hábitos
+                    </button>
+
                     {student.is_registered && (
                       <>
                         {/* Ver Progreso / Historial Button */}
@@ -673,6 +851,26 @@ export const StudentsView = () => {
               >
                 <Dumbbell size={16} />
                 Evolución de Fuerza & 1RM
+              </button>
+
+              <button
+                onClick={() => setProgressActiveTab('habits')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 16px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  backgroundColor: progressActiveTab === 'habits' ? 'var(--md-sys-color-primary)' : 'transparent',
+                  color: progressActiveTab === 'habits' ? '#FFF' : 'var(--md-sys-color-on-surface-variant)'
+                }}
+              >
+                <Utensils size={16} />
+                Hábitos & Nutrición ({studentHabits.length})
               </button>
             </div>
 
@@ -822,6 +1020,117 @@ export const StudentsView = () => {
                 )}
               </div>
             )}
+
+            {/* TAB 3: DAILY HABITS & NUTRITION */}
+            {progressActiveTab === 'habits' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {/* Metas Asignadas */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+                  gap: '12px'
+                }}>
+                  <div className="md-card" style={{ padding: '14px', textAlign: 'center' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block' }}>Meta Calorías</span>
+                    <span style={{ fontSize: '18px', fontWeight: 800, color: '#DEEAC1' }}>
+                      {progressStudent.daily_kcal_target ? `${progressStudent.daily_kcal_target} kcal` : 'Sin meta'}
+                    </span>
+                  </div>
+                  <div className="md-card" style={{ padding: '14px', textAlign: 'center' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block' }}>Meta Proteína</span>
+                    <span style={{ fontSize: '18px', fontWeight: 800, color: '#DEEAC1' }}>
+                      {progressStudent.daily_protein_target ? `${progressStudent.daily_protein_target} g` : 'Sin meta'}
+                    </span>
+                  </div>
+                  <div className="md-card" style={{ padding: '14px', textAlign: 'center' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block' }}>Meta Agua</span>
+                    <span style={{ fontSize: '18px', fontWeight: 800, color: '#DEEAC1' }}>
+                      {progressStudent.daily_water_liters_target ? `${progressStudent.daily_water_liters_target} L` : 'Sin meta'}
+                    </span>
+                  </div>
+                  <div className="md-card" style={{ padding: '14px', textAlign: 'center' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block' }}>Meta Pasos</span>
+                    <span style={{ fontSize: '18px', fontWeight: 800, color: '#DEEAC1' }}>
+                      {progressStudent.daily_steps_target ? progressStudent.daily_steps_target.toLocaleString() : 'Sin meta'}
+                    </span>
+                  </div>
+                </div>
+
+                {loadingStudentHabits ? (
+                  <div style={{ textAlign: 'center', padding: '40px', color: 'var(--md-sys-color-tertiary)' }}>
+                    Cargando historial de hábitos...
+                  </div>
+                ) : studentHabits.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '48px 16px', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                    El alumno aún no ha registrado hábitos ni ingesta nutricional.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {studentHabits.map((habit) => (
+                      <div
+                        key={habit.id}
+                        className="md-card"
+                        style={{
+                          padding: '16px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '10px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '14px', fontWeight: 700, color: '#FFF' }}>
+                            📅 {habit.log_date}
+                          </span>
+                          {habit.sleep_hours && (
+                            <span style={{ fontSize: '12px', color: 'var(--md-sys-color-primary-light)' }}>
+                              🌙 {habit.sleep_hours} hrs de sueño
+                            </span>
+                          )}
+                        </div>
+
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
+                          gap: '10px',
+                          fontSize: '13px'
+                        }}>
+                          <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '8px 12px', borderRadius: '8px' }}>
+                            <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block' }}>Calorías</span>
+                            <span style={{ fontWeight: 700, color: '#FFF' }}>
+                              {habit.kcal_consumed !== null ? `${habit.kcal_consumed} kcal` : '-'}
+                            </span>
+                          </div>
+                          <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '8px 12px', borderRadius: '8px' }}>
+                            <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block' }}>Proteína</span>
+                            <span style={{ fontWeight: 700, color: '#FFF' }}>
+                              {habit.protein_grams !== null ? `${habit.protein_grams} g` : '-'}
+                            </span>
+                          </div>
+                          <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '8px 12px', borderRadius: '8px' }}>
+                            <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block' }}>Agua</span>
+                            <span style={{ fontWeight: 700, color: '#FFF' }}>
+                              {habit.water_liters !== null ? `${habit.water_liters} L` : '-'}
+                            </span>
+                          </div>
+                          <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '8px 12px', borderRadius: '8px' }}>
+                            <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block' }}>Pasos</span>
+                            <span style={{ fontWeight: 700, color: '#FFF' }}>
+                              {habit.steps !== null ? habit.steps.toLocaleString() : '-'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {habit.notes && (
+                          <div style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', fontStyle: 'italic', backgroundColor: 'rgba(0,0,0,0.2)', padding: '8px 12px', borderRadius: '8px' }}>
+                            💬 "{habit.notes}"
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -944,6 +1253,178 @@ export const StudentsView = () => {
                   }}
                 >
                   {savingMetric ? 'Guardando...' : 'Registrar Evaluación'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Configurar Plan & Hábitos del Alumno */}
+      {showCoachSettingsModal && selectedStudentForSettings && (
+        <div style={modalBackdropStyle} onClick={() => setShowCoachSettingsModal(false)}>
+          <div className="responsive-modal-box" style={{ ...modalBoxStyle, width: '100%', maxWidth: '540px' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <div>
+                <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--md-sys-color-primary-light)', letterSpacing: '0.08em' }}>
+                  Prescripción & Membresía
+                </span>
+                <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#FFF' }}>
+                  {selectedStudentForSettings.name || selectedStudentForSettings.rut}
+                </h2>
+              </div>
+              <button
+                onClick={() => setShowCoachSettingsModal(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--md-sys-color-outline)', cursor: 'pointer', fontSize: '18px' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {settingsError && (
+              <div style={{
+                backgroundColor: 'rgba(255, 180, 171, 0.15)',
+                border: '1px solid rgba(255, 180, 171, 0.3)',
+                borderRadius: '12px',
+                padding: '10px 14px',
+                color: 'var(--md-sys-color-error)',
+                fontSize: '13px',
+                marginBottom: '16px'
+              }}>
+                {settingsError}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveCoachSettings} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Sección 1: Membresía */}
+              <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#DEEAC1', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <ShieldCheck size={16} /> Estado de Membresía
+                </span>
+
+                <div className="responsive-grid-2col" style={{ gap: '12px' }}>
+                  <div>
+                    <label style={labelStyle}>Nombre del Plan</label>
+                    <input
+                      type="text"
+                      value={coachSettingsForm.plan_name}
+                      onChange={(e) => setCoachSettingsForm({ ...coachSettingsForm, plan_name: e.target.value })}
+                      placeholder="Ej: Plan Estándar, Plan VIP"
+                      style={inputStyle}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>Fecha de Vencimiento</label>
+                    <input
+                      type="date"
+                      value={coachSettingsForm.membership_expires_at}
+                      onChange={(e) => setCoachSettingsForm({ ...coachSettingsForm, membership_expires_at: e.target.value })}
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '13px', color: '#FFF' }}>
+                  <input
+                    type="checkbox"
+                    checked={coachSettingsForm.is_active}
+                    onChange={(e) => setCoachSettingsForm({ ...coachSettingsForm, is_active: e.target.checked })}
+                    style={{ width: '16px', height: '16px', accentColor: 'var(--md-sys-color-primary)' }}
+                  />
+                  <span>Membresía activa y habilitada para entrenar</span>
+                </label>
+              </div>
+
+              {/* Sección 2: Objetivos de Hábitos Diarios */}
+              <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#DEEAC1', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Utensils size={16} /> Metas Diarias de Hábitos
+                </span>
+
+                <div className="responsive-grid-2col" style={{ gap: '12px' }}>
+                  <div>
+                    <label style={labelStyle}>Meta Calorías (kcal/día)</label>
+                    <input
+                      type="number"
+                      step="50"
+                      placeholder="Ej: 2400"
+                      value={coachSettingsForm.daily_kcal_target}
+                      onChange={(e) => setCoachSettingsForm({ ...coachSettingsForm, daily_kcal_target: e.target.value })}
+                      style={inputStyle}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>Meta Proteína (gramos/día)</label>
+                    <input
+                      type="number"
+                      step="5"
+                      placeholder="Ej: 160"
+                      value={coachSettingsForm.daily_protein_target}
+                      onChange={(e) => setCoachSettingsForm({ ...coachSettingsForm, daily_protein_target: e.target.value })}
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
+
+                <div className="responsive-grid-2col" style={{ gap: '12px' }}>
+                  <div>
+                    <label style={labelStyle}>Meta Agua (Litros/día)</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      placeholder="Ej: 2.5"
+                      value={coachSettingsForm.daily_water_liters_target}
+                      onChange={(e) => setCoachSettingsForm({ ...coachSettingsForm, daily_water_liters_target: e.target.value })}
+                      style={inputStyle}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>Meta Pasos Diarios</label>
+                    <input
+                      type="number"
+                      step="500"
+                      placeholder="Ej: 10000"
+                      value={coachSettingsForm.daily_steps_target}
+                      onChange={(e) => setCoachSettingsForm({ ...coachSettingsForm, daily_steps_target: e.target.value })}
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '4px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowCoachSettingsModal(false)}
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '12px',
+                    backgroundColor: 'transparent',
+                    border: '1px solid var(--md-sys-color-outline-variant)',
+                    color: 'var(--md-sys-color-on-surface-variant)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingSettings}
+                  style={{
+                    padding: '10px 24px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #6E8842 0%, #586E33 100%)',
+                    color: '#FFF',
+                    border: '1px solid rgba(137, 168, 84, 0.4)',
+                    fontWeight: 700,
+                    cursor: savingSettings ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 16px rgba(110, 136, 66, 0.4)'
+                  }}
+                >
+                  {savingSettings ? 'Guardando...' : 'Guardar Configuración'}
                 </button>
               </div>
             </form>

@@ -12,6 +12,7 @@ from app.schemas.schemas import (
     StudentCompleteRegistration,
     StudentOut,
     StudentWithTokenOut,
+    StudentCoachSettingsUpdate,
     UserOut,
 )
 from app.api.deps import get_current_user, require_coach, require_admin
@@ -139,6 +140,39 @@ def get_students(
     Lista todos los alumnos registrados en bdmottus.students para que el Coach pueda asignarles rutinas.
     """
     return db.query(Student).order_by(Student.name.asc()).all()
+
+@router.patch("/students/{student_id}/coach-settings", response_model=StudentOut)
+def update_student_coach_settings(
+    student_id: UUID,
+    data: StudentCoachSettingsUpdate,
+    db: Session = Depends(get_db),
+    current_coach: User = Depends(require_coach)
+):
+    """
+    Coach o Admin configura el plan, vigencia de membresía, estado y objetivos nutricionales / hábitos del alumno.
+    """
+    student = db.query(Student).filter(Student.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alumno no encontrado.")
+
+    if data.plan_name is not None:
+        student.plan_name = data.plan_name
+    if data.membership_expires_at is not None:
+        student.membership_expires_at = data.membership_expires_at
+    if data.is_active is not None:
+        student.is_active = data.is_active
+    if data.daily_kcal_target is not None:
+        student.daily_kcal_target = data.daily_kcal_target
+    if data.daily_protein_target is not None:
+        student.daily_protein_target = data.daily_protein_target
+    if data.daily_steps_target is not None:
+        student.daily_steps_target = data.daily_steps_target
+    if data.daily_water_liters_target is not None:
+        student.daily_water_liters_target = data.daily_water_liters_target
+
+    db.commit()
+    db.refresh(student)
+    return student
 
 @router.get("/", response_model=List[UserOut])
 def list_all_users(

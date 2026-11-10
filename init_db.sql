@@ -131,6 +131,52 @@ CREATE TABLE IF NOT EXISTS bdmottus.routine_comments (
 
 CREATE INDEX IF NOT EXISTS idx_routine_comments_routine_created ON bdmottus.routine_comments (routine_id, created_at ASC);
 
+-- Tabla de Plantillas Maestras de Rutinas (Workout Templates TrueCoach)
+CREATE TABLE IF NOT EXISTS bdmottus.routine_templates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    coach_id UUID REFERENCES bdmottus.users(id) ON DELETE SET NULL,
+    title VARCHAR(200) NOT NULL,
+    description TEXT,
+    category_tag VARCHAR(50) DEFAULT 'General',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Detalle de Ejercicios en Plantilla
+CREATE TABLE IF NOT EXISTS bdmottus.routine_template_exercises (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    template_id UUID NOT NULL REFERENCES bdmottus.routine_templates(id) ON DELETE CASCADE,
+    exercise_id UUID NOT NULL REFERENCES bdmottus.exercises(id) ON DELETE CASCADE,
+    order_index INTEGER DEFAULT 1,
+    superset_group VARCHAR(10),
+    series INTEGER DEFAULT 3,
+    repetitions VARCHAR(50) DEFAULT '12 reps',
+    rest_seconds INTEGER DEFAULT 60,
+    target_weight NUMERIC(6, 2),
+    target_rpe NUMERIC(3, 1),
+    tempo VARCHAR(20),
+    coach_notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_template_exercises_template_id ON bdmottus.routine_template_exercises (template_id, order_index);
+
+-- Tabla de Registro Diario de Hábitos y Nutrición
+CREATE TABLE IF NOT EXISTS bdmottus.habit_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id UUID NOT NULL REFERENCES bdmottus.students(id) ON DELETE CASCADE,
+    log_date DATE NOT NULL,
+    kcal_consumed INTEGER,
+    protein_grams INTEGER,
+    water_liters NUMERIC(3, 1),
+    steps INTEGER,
+    sleep_hours NUMERIC(3, 1),
+    notes TEXT,
+    logged_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_student_habit_date UNIQUE (student_id, log_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_habit_logs_student_date ON bdmottus.habit_logs (student_id, log_date DESC);
+
 -- Reotorgar permisos a las tablas recién creadas a usr_mottus
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA bdmottus TO usr_mottus;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA bdmottus TO usr_mottus;

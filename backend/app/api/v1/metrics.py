@@ -1,11 +1,12 @@
+from datetime import date
 from typing import List, Optional, Union
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.api.deps import get_current_user, require_coach
-from app.models.models import User, Student, BodyMetric
-from app.schemas.schemas import BodyMetricCreate, BodyMetricOut
+from app.models.models import User, Student, BodyMetric, HabitLog
+from app.schemas.schemas import BodyMetricCreate, BodyMetricOut, HabitLogCreate, HabitLogOut
 
 router = APIRouter()
 
@@ -174,3 +175,79 @@ def delete_metric(
     db.delete(metric)
     db.commit()
     return {"message": "Métrica eliminada exitosamente"}
+
+@router.post("/habits", response_model=HabitLogOut)
+def log_daily_habits(
+    habit_in: HabitLogCreate,
+    student_id: Optional[UUID] = None,
+    db: Session = Depends(get_db),
+    current_user: Union[User, Student] = Depends(get_current_user)
+):
+    """
+    Registra o actualiza los hábitos diarios (calorías, proteína, agua, pasos, sueño) para una fecha dada (Upsert).
+    """
+    if current_user.role in ["coach", "admin"]:
+        if not student_id:
+            raise HTTPException(status_code=400, detail="El coach debe especificar el student_id.")
+        target_student_id = student_id
+    else:
+        target_student_id = current_user.id
+
+    target_date = habit_in.log_date or date.today()
+
+    existing_habit = db.query(HabitLog).filter(
+        HabitLog.student_id == target_student_id,
+        HabitLog.log_date == target_date
+    ).first()
+
+    if existing_habit:
+        if habit_in.kcal_consumed is not None:
+            existing_habit.kcal_consumed = habit_in.kcal_consumed
+        if habit_in.protein_grams is not None:
+            existing_habit.protein_grams = habit_in.protein_grams
+        if habit_in.water_liters is not None:
+            existing_habit.water_liters = habit_in.water_liters
+        if habit_in.steps is not None:
+            existing_habit.steps = habit_in.steps
+        if habit_in.sleep_hours is not None:
+            existing_habit.sleep_hours = habit_in.sleep_hours
+        if habit_in.notes is not None:
+            existing_habit.notes = habit_in.notes
+        db.commit()
+        db.refresh(existing_habit)
+        return existing_habit
+    else:
+        new_habit = HabitLog(
+            student_id=target_student_id,
+            log_date=target_date,
+            kcal_consumed=habit_in.kcal_consumed,
+            protein_grams=habit_in.protein_grams,
+            water_liters=habit_in.water_liters,
+            steps=habit_in.steps,
+            sleep_hours=habit_in.sleep_hours,
+            notes=habit_in.notes
+        )
+        db.add(new_habit)
+        db.commit()
+        db.refresh(new_habit)
+        return new_habit
+
+@router.get("/habits/{student_id}", response_model=List[HabitLogOut])
+def get_student_habits(
+    student_id: UUID,
+    days: int = 30,
+    db: Session = Depends(get_db),
+    current_user: Union[User, Student] = Depends(get_current_user)
+):
+    """
+    Obtiene el historial de hábitos diarios del alumno (por defecto últimos 30 días).
+    """
+    if current_user.role not in ["coach", "admin"] and current_user.id != student_id:
+        raise HTTPException(status_code=403, detail="No tienes autorización para ver los hábitos de este alumno.")
+
+    habits = db.query(HabitLog)\
+        .filter(HabitLog.student_id == student_id)\
+        .order_by(HabitLog.log_date.desc())\
+        .limit(days)\
+        .all()
+    return habits

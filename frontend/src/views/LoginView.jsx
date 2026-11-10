@@ -197,64 +197,66 @@ export const LoginView = () => {
           </button>
         </form>
 
-        {/* Quick Demo Credentials */}
-        <div style={{
-          marginTop: '28px',
-          paddingTop: '20px',
-          borderTop: '1px solid rgba(110, 136, 66, 0.15)',
-          textAlign: 'center'
-        }}>
-          <span style={{
-            fontSize: '12px',
-            color: 'var(--md-sys-color-on-surface-variant)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            marginBottom: '10px'
+        {/* Quick Demo Credentials (Visible only in development) */}
+        {import.meta.env.DEV && (
+          <div style={{
+            marginTop: '28px',
+            paddingTop: '20px',
+            borderTop: '1px solid rgba(110, 136, 66, 0.15)',
+            textAlign: 'center'
           }}>
-            <Sparkles size={14} color="var(--md-sys-color-primary-light)" />
-            Acceso Rápido de Prueba:
-          </span>
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={() => fillQuickAccess('1-9', 'Admin123!')}
-              style={{
-                fontSize: '12px',
-                padding: '6px 12px',
-                borderRadius: '8px',
-                backgroundColor: 'rgba(110, 136, 66, 0.12)',
-                border: '1px solid rgba(110, 136, 66, 0.25)',
-                color: 'var(--md-sys-color-on-surface)',
-                cursor: 'pointer',
-                transition: 'background 0.2s'
-              }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(110, 136, 66, 0.25)'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'rgba(110, 136, 66, 0.12)'}
-            >
-              Admin (1-9)
-            </button>
-            <button
-              type="button"
-              onClick={() => fillQuickAccess('2-7', 'Coach123!')}
-              style={{
-                fontSize: '12px',
-                padding: '6px 12px',
-                borderRadius: '8px',
-                backgroundColor: 'rgba(110, 136, 66, 0.12)',
-                border: '1px solid rgba(110, 136, 66, 0.25)',
-                color: 'var(--md-sys-color-on-surface)',
-                cursor: 'pointer',
-                transition: 'background 0.2s'
-              }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(110, 136, 66, 0.25)'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'rgba(110, 136, 66, 0.12)'}
-            >
-              Coach (2-7)
-            </button>
+            <span style={{
+              fontSize: '12px',
+              color: 'var(--md-sys-color-on-surface-variant)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              marginBottom: '10px'
+            }}>
+              <Sparkles size={14} color="var(--md-sys-color-primary-light)" />
+              Acceso Rápido de Prueba (DEV):
+            </span>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => fillQuickAccess('1-9', 'Admin123!')}
+                style={{
+                  fontSize: '12px',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(110, 136, 66, 0.12)',
+                  border: '1px solid rgba(110, 136, 66, 0.25)',
+                  color: 'var(--md-sys-color-on-surface)',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(110, 136, 66, 0.25)'}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'rgba(110, 136, 66, 0.12)'}
+              >
+                Admin (1-9)
+              </button>
+              <button
+                type="button"
+                onClick={() => fillQuickAccess('2-7', 'Coach123!')}
+                style={{
+                  fontSize: '12px',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(110, 136, 66, 0.12)',
+                  border: '1px solid rgba(110, 136, 66, 0.25)',
+                  color: 'var(--md-sys-color-on-surface)',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(110, 136, 66, 0.25)'}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'rgba(110, 136, 66, 0.12)'}
+              >
+                Coach (2-7)
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -5,9 +5,9 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.security import verify_password, create_access_token
+from app.core.security import verify_password, create_access_token, get_password_hash
 from app.models.models import User, Student
-from app.schemas.schemas import Token, UserLogin, UserOut, StudentOut
+from app.schemas.schemas import Token, UserLogin, UserOut, StudentOut, UserProfileUpdate
 from app.api.deps import get_current_user
 
 router = APIRouter()
@@ -85,6 +85,43 @@ def login_for_access_token(
 
 @router.get("/me", response_model=Union[StudentOut, UserOut])
 def read_current_user(current_user: Union[User, Student] = Depends(get_current_user)):
+    if isinstance(current_user, Student):
+        return StudentOut.model_validate(current_user)
+    return UserOut.model_validate(current_user)
+
+@router.put("/profile", response_model=Union[StudentOut, UserOut])
+def update_my_profile(
+    data: UserProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: Union[User, Student] = Depends(get_current_user)
+):
+    """
+    Permite al usuario autenticado (Coach, Admin o Alumno) actualizar sus datos de contacto y/o contraseña.
+    """
+    if data.new_password:
+        if not data.current_password:
+            raise HTTPException(status_code=400, detail="Debe ingresar su contraseña actual para establecer una nueva.")
+        if not verify_password(data.current_password, current_user.password_hash):
+            raise HTTPException(status_code=400, detail="La contraseña actual ingresada es incorrecta.")
+        current_user.password_hash = get_password_hash(data.new_password)
+
+    if data.email:
+        clean_email = data.email.strip().lower()
+        if clean_email != (current_user.email or "").lower():
+            in_users = db.query(User).filter(func.lower(User.email) == clean_email, User.id != current_user.id).first()
+            in_students = db.query(Student).filter(func.lower(Student.email) == clean_email, Student.id != current_user.id).first()
+            if in_users or in_students:
+                raise HTTPException(status_code=400, detail="El correo electrónico ya está registrado por otro usuario.")
+            current_user.email = clean_email
+
+    if data.name is not None and data.name.strip():
+        current_user.name = data.name.strip()
+    if data.phone is not None:
+        current_user.phone = data.phone.strip()
+
+    db.commit()
+    db.refresh(current_user)
+
     if isinstance(current_user, Student):
         return StudentOut.model_validate(current_user)
     return UserOut.model_validate(current_user)

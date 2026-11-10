@@ -10,7 +10,16 @@ import {
   Dumbbell, 
   MessageSquare, 
   Activity, 
-  Send
+  Send,
+  Bookmark,
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  LayoutList,
+  CalendarDays,
+  Sparkles,
+  Check,
+  X
 } from 'lucide-react';
 import api from '../services/api';
 import { VideoModal } from '../components/VideoModal';
@@ -20,6 +29,23 @@ export const RoutinesView = () => {
   const [students, setStudents] = useState([]);
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // View Mode: 'list' | 'calendar'
+  const [viewMode, setViewMode] = useState('list');
+  const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
+
+  // Workout Templates states
+  const [templates, setTemplates] = useState([]);
+  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
+  const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
+  const [routineToTemplate, setRoutineToTemplate] = useState(null);
+  const [templateForm, setTemplateForm] = useState({
+    title: '',
+    description: '',
+    category_tag: 'Hipertrofia'
+  });
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [templateMsg, setTemplateMsg] = useState({ type: '', text: '' });
 
   // Modal Create Routine
   const [showModal, setShowModal] = useState(false);
@@ -42,6 +68,15 @@ export const RoutinesView = () => {
   const [newComment, setNewComment] = useState('');
   const [sendingComment, setSendingComment] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
+
+  const fetchTemplates = async () => {
+    try {
+      const res = await api.get('/routines/templates');
+      setTemplates(res.data);
+    } catch (err) {
+      console.error('Error al cargar plantillas:', err);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -66,12 +101,123 @@ export const RoutinesView = () => {
 
   useEffect(() => {
     fetchData();
+    fetchTemplates();
     // Default scheduled time to tomorrow 09:00
     const now = new Date();
     now.setDate(now.getDate() + 1);
     now.setHours(9, 0, 0, 0);
     setScheduledAt(now.toISOString().slice(0, 16));
   }, []);
+
+  // Template Handlers
+  const handleOpenSaveTemplate = (routine) => {
+    setRoutineToTemplate(routine);
+    setTemplateForm({
+      title: `Plantilla - ${routine.title}`,
+      description: routine.notes || '',
+      category_tag: 'Hipertrofia'
+    });
+    setTemplateMsg({ type: '', text: '' });
+    setShowSaveTemplateModal(true);
+  };
+
+  const handleSaveRoutineAsTemplate = async (e) => {
+    e.preventDefault();
+    if (!routineToTemplate) return;
+    setSavingTemplate(true);
+    setTemplateMsg({ type: '', text: '' });
+
+    try {
+      await api.post(`/routines/from-existing/${routineToTemplate.id}/save-template`, {
+        title: templateForm.title.trim(),
+        description: templateForm.description.trim() || null,
+        category_tag: templateForm.category_tag.trim() || 'General'
+      });
+      setTemplateMsg({ type: 'success', text: '¡Plantilla guardada con éxito en la biblioteca!' });
+      fetchTemplates();
+      setTimeout(() => {
+        setShowSaveTemplateModal(false);
+        setTemplateMsg({ type: '', text: '' });
+      }, 1500);
+    } catch (err) {
+      setTemplateMsg({
+        type: 'error',
+        text: err.response?.data?.detail || 'Error al guardar la plantilla.'
+      });
+    } finally {
+      setSavingTemplate(false);
+    }
+  };
+
+  const handleDeleteTemplate = async (templateId) => {
+    if (!window.confirm('¿Seguro que deseas eliminar esta plantilla maestra?')) return;
+    try {
+      await api.delete(`/routines/templates/${templateId}`);
+      fetchTemplates();
+    } catch (err) {
+      alert('Error al eliminar la plantilla.');
+    }
+  };
+
+  const handleLoadTemplateIntoForm = (tpl) => {
+    setTitle(tpl.title);
+    if (tpl.description) setNotes(tpl.description);
+    
+    const mapped = tpl.template_exercises.map((te, idx) => ({
+      exercise_id: te.exercise_id,
+      order_index: te.order_index || (idx + 1),
+      superset_group: te.superset_group || '',
+      series: te.series || 3,
+      repetitions: te.repetitions || '12 reps',
+      rest_seconds: te.rest_seconds || 60,
+      target_weight: te.target_weight !== null ? te.target_weight : '',
+      target_rpe: te.target_rpe !== null ? te.target_rpe : '',
+      tempo: te.tempo || '',
+      coach_notes: te.coach_notes || ''
+    }));
+    setSelectedExercises(mapped);
+    setShowTemplatesModal(false);
+    setShowModal(true);
+  };
+
+  // Weekly Calendar Calculation
+  const getWeekDays = (offset = 0) => {
+    const curr = new Date();
+    // Monday as start of week (day 1)
+    const dayOfWeek = curr.getDay(); // 0 is Sun, 1 is Mon...
+    const distanceToMonday = (dayOfWeek + 6) % 7;
+    const monday = new Date(curr);
+    monday.setDate(curr.getDate() - distanceToMonday + offset * 7);
+    monday.setHours(0, 0, 0, 0);
+
+    const days = [];
+    const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const isToday = new Date().toDateString() === d.toDateString();
+      const dateStr = d.toISOString().split('T')[0];
+
+      // Routines matching this date
+      const daysRoutines = routines.filter(r => {
+        const rDate = new Date(r.scheduled_at).toISOString().split('T')[0];
+        return rDate === dateStr;
+      });
+
+      days.push({
+        dateObj: d,
+        dateStr,
+        dayName: dayNames[i],
+        dayNumber: d.getDate(),
+        monthName: d.toLocaleDateString('es-CL', { month: 'short' }),
+        isToday,
+        routines: daysRoutines
+      });
+    }
+
+    return days;
+  };
 
   const handleToggleExerciseSelection = (exerciseId) => {
     const exists = selectedExercises.find(e => e.exercise_id === exerciseId);
@@ -220,7 +366,27 @@ export const RoutinesView = () => {
           </p>
         </div>
 
-        <div className="view-actions">
+        <div className="view-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setShowTemplatesModal(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '12px 18px',
+              borderRadius: '12px',
+              backgroundColor: 'rgba(110, 136, 66, 0.15)',
+              border: '1px solid rgba(110, 136, 66, 0.35)',
+              color: '#DEEAC1',
+              fontWeight: 700,
+              fontSize: '13.5px',
+              cursor: 'pointer'
+            }}
+          >
+            <BookOpen size={17} />
+            Plantillas ({templates.length})
+          </button>
+
           <button
             onClick={() => setShowModal(true)}
             style={{
@@ -244,8 +410,220 @@ export const RoutinesView = () => {
         </div>
       </div>
 
-      {/* Routine Cards List */}
-      {loading ? (
+      {/* Sub-Header: Mode Switcher (List vs Weekly Calendar) */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '20px',
+        flexWrap: 'wrap',
+        gap: '12px'
+      }}>
+        <div style={{
+          display: 'inline-flex',
+          backgroundColor: 'var(--md-sys-color-surface-variant)',
+          borderRadius: '12px',
+          padding: '4px',
+          border: '1px solid var(--md-sys-color-outline-variant)'
+        }}>
+          <button
+            onClick={() => setViewMode('list')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 14px',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 600,
+              backgroundColor: viewMode === 'list' ? 'var(--md-sys-color-primary)' : 'transparent',
+              color: viewMode === 'list' ? '#FFF' : 'var(--md-sys-color-on-surface-variant)',
+              transition: 'all 0.2s'
+            }}
+          >
+            <LayoutList size={16} />
+            Vista Lista ({routines.length})
+          </button>
+          <button
+            onClick={() => setViewMode('calendar')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 14px',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 600,
+              backgroundColor: viewMode === 'calendar' ? 'var(--md-sys-color-primary)' : 'transparent',
+              color: viewMode === 'calendar' ? '#FFF' : 'var(--md-sys-color-on-surface-variant)',
+              transition: 'all 0.2s'
+            }}
+          >
+            <CalendarDays size={16} />
+            Calendario Semanal
+          </button>
+        </div>
+
+        {viewMode === 'calendar' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              onClick={() => setCurrentWeekOffset(prev => prev - 1)}
+              style={{
+                padding: '6px 10px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(255,255,255,0.06)',
+                border: '1px solid var(--md-sys-color-outline-variant)',
+                color: '#FFF',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+              title="Semana anterior"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              onClick={() => setCurrentWeekOffset(0)}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '8px',
+                backgroundColor: currentWeekOffset === 0 ? 'rgba(110, 136, 66, 0.25)' : 'rgba(255,255,255,0.06)',
+                border: currentWeekOffset === 0 ? '1px solid rgba(137, 168, 84, 0.5)' : '1px solid var(--md-sys-color-outline-variant)',
+                color: currentWeekOffset === 0 ? '#DEEAC1' : '#FFF',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 600
+              }}
+            >
+              Semana Actual
+            </button>
+            <button
+              onClick={() => setCurrentWeekOffset(prev => prev + 1)}
+              style={{
+                padding: '6px 10px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(255,255,255,0.06)',
+                border: '1px solid var(--md-sys-color-outline-variant)',
+                color: '#FFF',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+              title="Semana siguiente"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Weekly Calendar Grid */}
+      {viewMode === 'calendar' && (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+          gap: '12px',
+          marginBottom: '28px'
+        }}>
+          {getWeekDays(currentWeekOffset).map((day) => (
+            <div
+              key={day.dateStr}
+              style={{
+                backgroundColor: day.isToday ? 'rgba(110, 136, 66, 0.15)' : 'var(--md-sys-color-surface-variant)',
+                borderRadius: '16px',
+                border: day.isToday ? '1px solid rgba(137, 168, 84, 0.6)' : '1px solid var(--md-sys-color-outline-variant)',
+                padding: '14px',
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: '260px',
+                boxShadow: day.isToday ? '0 0 16px rgba(110, 136, 66, 0.2)' : 'none'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <div>
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: day.isToday ? 'var(--md-sys-color-primary-light)' : '#FFF' }}>
+                    {day.dayName}
+                  </span>
+                  <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block' }}>
+                    {day.dayNumber} {day.monthName}
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    setScheduledAt(`${day.dateStr}T09:00`);
+                    setShowModal(true);
+                  }}
+                  title={`Asignar rutina para el ${day.dayName} ${day.dayNumber}`}
+                  style={{
+                    width: '26px',
+                    height: '26px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#FFF',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                {day.routines.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '24px 8px', color: 'var(--md-sys-color-outline)', fontSize: '12px' }}>
+                    Sin sesiones
+                  </div>
+                ) : (
+                  day.routines.map((r) => (
+                    <div
+                      key={r.id}
+                      onClick={() => handleOpenInspectModal(r)}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: '10px',
+                        backgroundColor: r.is_executed ? 'rgba(110, 136, 66, 0.25)' : 'rgba(0,0,0,0.35)',
+                        border: r.is_executed ? '1px solid rgba(137, 168, 84, 0.5)' : '1px solid var(--md-sys-color-outline-variant)',
+                        cursor: 'pointer',
+                        transition: 'transform 0.15s'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                      onMouseOut={(e) => e.currentTarget.style.transform = 'none'}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                        {r.is_executed ? (
+                          <CheckCircle2 size={13} color="var(--md-sys-color-secondary)" />
+                        ) : (
+                          <Circle size={13} color="var(--md-sys-color-outline)" />
+                        )}
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#FFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {r.title}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: '11px', color: '#DEEAC1', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        👤 {r.student?.name || r.student?.rut}
+                      </span>
+                      <span style={{ fontSize: '10px', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                        {r.routine_exercises?.length || 0} ejercicios
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Routine Cards List (Visible in List Mode) */}
+      {viewMode === 'list' && (
+        loading ? (
         <div style={{ textAlign: 'center', padding: '64px', color: 'var(--md-sys-color-tertiary)' }}>
           Cargando rutinas del coach...
         </div>
@@ -421,47 +799,97 @@ export const RoutinesView = () => {
                   </p>
                 )}
 
-                {/* Inspect Results & Feedback Button */}
-                <button
-                  onClick={() => handleOpenInspectModal(routine)}
-                  style={{
-                    marginTop: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    padding: '10px 16px',
-                    borderRadius: '10px',
-                    backgroundColor: 'rgba(110, 136, 66, 0.18)',
-                    border: '1px solid rgba(137, 168, 84, 0.4)',
-                    color: '#DEEAC1',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(110, 136, 66, 0.3)'}
-                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'rgba(110, 136, 66, 0.18)'}
-                >
-                  <Activity size={16} />
-                  Inspeccionar Series & Feedback
-                </button>
+                {/* Actions: Inspect Results & Save Template */}
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                  <button
+                    onClick={() => handleOpenInspectModal(routine)}
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      padding: '10px 14px',
+                      borderRadius: '10px',
+                      backgroundColor: 'rgba(110, 136, 66, 0.18)',
+                      border: '1px solid rgba(137, 168, 84, 0.4)',
+                      color: '#DEEAC1',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(110, 136, 66, 0.3)'}
+                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'rgba(110, 136, 66, 0.18)'}
+                  >
+                    <Activity size={16} />
+                    Inspeccionar Series
+                  </button>
+
+                  <button
+                    onClick={() => handleOpenSaveTemplate(routine)}
+                    title="Guardar como Plantilla de Entrenamiento"
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid var(--md-sys-color-outline-variant)',
+                      color: 'var(--md-sys-color-primary-light)',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <Bookmark size={15} />
+                    Plantilla
+                  </button>
+                </div>
               </div>
             );
           })}
         </div>
-      )}
+      ))}
 
       {/* Modal: Create & Assign Routine with TrueCoach features */}
       {showModal && (
         <div style={modalBackdropStyle} onClick={() => setShowModal(false)}>
           <div className="responsive-modal-box" style={{ ...modalBoxStyle, width: '100%', maxWidth: '840px', maxHeight: '92vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#FFF', marginBottom: '6px' }}>
-              Workout Builder Pro (TrueCoach)
-            </h2>
-            <p style={{ fontSize: '13px', color: 'var(--md-sys-color-tertiary)', marginBottom: '18px' }}>
-              Prescribe ejercicios con superseries, tempo, RPE y programación periódica
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+              <div>
+                <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#FFF', margin: 0 }}>
+                  Workout Builder Pro (TrueCoach)
+                </h2>
+                <p style={{ fontSize: '13px', color: 'var(--md-sys-color-tertiary)', marginTop: '4px' }}>
+                  Prescribe ejercicios con superseries, tempo, RPE y programación periódica
+                </p>
+              </div>
+
+              {templates.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowTemplatesModal(true)}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '10px',
+                    backgroundColor: 'rgba(110, 136, 66, 0.2)',
+                    border: '1px solid rgba(137, 168, 84, 0.45)',
+                    color: '#DEEAC1',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Sparkles size={14} />
+                  Cargar desde Plantilla ({templates.length})
+                </button>
+              )}
+            </div>
 
             {saveError && (
               <div style={{
@@ -1053,6 +1481,259 @@ export const RoutinesView = () => {
                 </button>
               </form>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Guardar como Plantilla de Entrenamiento */}
+      {showSaveTemplateModal && routineToTemplate && (
+        <div style={modalBackdropStyle} onClick={() => setShowSaveTemplateModal(false)}>
+          <div className="responsive-modal-box" style={{ ...modalBoxStyle, width: '100%', maxWidth: '480px' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <div>
+                <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--md-sys-color-primary-light)', letterSpacing: '0.08em' }}>
+                  Workout Templates
+                </span>
+                <h3 style={{ fontSize: '19px', fontWeight: 800, color: '#FFF', margin: 0 }}>
+                  Guardar como Plantilla Maestra
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowSaveTemplateModal(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--md-sys-color-outline)', cursor: 'pointer', fontSize: '18px' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {templateMsg.text && (
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: '10px',
+                marginBottom: '16px',
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                backgroundColor: templateMsg.type === 'success' ? 'rgba(110, 136, 66, 0.2)' : 'rgba(255, 180, 171, 0.15)',
+                color: templateMsg.type === 'success' ? '#DEEAC1' : 'var(--md-sys-color-error)',
+                border: `1px solid ${templateMsg.type === 'success' ? 'rgba(110, 136, 66, 0.4)' : 'rgba(255, 180, 171, 0.3)'}`
+              }}>
+                {templateMsg.type === 'success' ? <Check size={16} /> : <X size={16} />}
+                {templateMsg.text}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveRoutineAsTemplate} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={labelStyle}>Título de la Plantilla *</label>
+                <input
+                  type="text"
+                  required
+                  value={templateForm.title}
+                  onChange={(e) => setTemplateForm({ ...templateForm, title: e.target.value })}
+                  style={inputStyle}
+                  placeholder="Ej: Plantilla Hipertrofia Tren Superior"
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>Categoría / Tag</label>
+                <select
+                  value={templateForm.category_tag}
+                  onChange={(e) => setTemplateForm({ ...templateForm, category_tag: e.target.value })}
+                  style={inputStyle}
+                >
+                  <option value="Hipertrofia">Hipertrofia</option>
+                  <option value="Fuerza">Fuerza</option>
+                  <option value="Full Body">Full Body</option>
+                  <option value="Funcional">Funcional</option>
+                  <option value="Acondicionamiento">Acondicionamiento</option>
+                  <option value="General">General</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Descripción / Notas Técnicas</label>
+                <textarea
+                  rows="3"
+                  value={templateForm.description}
+                  onChange={(e) => setTemplateForm({ ...templateForm, description: e.target.value })}
+                  style={{ ...inputStyle, resize: 'vertical' }}
+                  placeholder="Instrucciones generales de la plantilla..."
+                />
+              </div>
+
+              <div style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', backgroundColor: 'rgba(255,255,255,0.03)', padding: '10px 14px', borderRadius: '10px' }}>
+                📋 Se copiarán los <strong>{routineToTemplate.routine_exercises?.length || 0} ejercicios</strong>, superseries, tempo y pesos objetivo asociados.
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '4px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowSaveTemplateModal(false)}
+                  style={{
+                    padding: '9px 16px',
+                    borderRadius: '10px',
+                    backgroundColor: 'transparent',
+                    border: '1px solid var(--md-sys-color-outline-variant)',
+                    color: 'var(--md-sys-color-on-surface-variant)',
+                    cursor: 'pointer',
+                    fontSize: '13px'
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingTemplate}
+                  style={{
+                    padding: '9px 20px',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #6E8842 0%, #586E33 100%)',
+                    color: '#FFF',
+                    border: '1px solid rgba(137, 168, 84, 0.4)',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    cursor: savingTemplate ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {savingTemplate ? 'Guardando...' : 'Guardar Plantilla'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Biblioteca de Plantillas de Entrenamiento */}
+      {showTemplatesModal && (
+        <div style={modalBackdropStyle} onClick={() => setShowTemplatesModal(false)}>
+          <div className="responsive-modal-box" style={{ ...modalBoxStyle, width: '100%', maxWidth: '720px', maxHeight: '85vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '12px',
+                  backgroundColor: 'rgba(110, 136, 66, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--md-sys-color-primary-light)'
+                }}>
+                  <BookOpen size={20} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#FFF', margin: 0 }}>
+                    Biblioteca de Plantillas ({templates.length})
+                  </h3>
+                  <span style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                    Carga rutinas pre-configuradas con 1 solo clic en el Workout Builder
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowTemplatesModal(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--md-sys-color-outline)', cursor: 'pointer', fontSize: '18px' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {templates.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '48px 16px', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                <Bookmark size={36} color="var(--md-sys-color-outline)" style={{ margin: '0 auto 12px' }} />
+                <p style={{ fontSize: '14px', color: '#FFF' }}>Aún no tienes plantillas guardadas</p>
+                <p style={{ fontSize: '12px', color: 'var(--md-sys-color-tertiary)', marginTop: '4px' }}>
+                  Puedes convertir cualquier rutina existente en plantilla usando el botón "Plantilla" en su tarjeta.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {templates.map((tpl) => (
+                  <div
+                    key={tpl.id}
+                    style={{
+                      padding: '16px',
+                      borderRadius: '14px',
+                      backgroundColor: 'var(--md-sys-color-surface-variant)',
+                      border: '1px solid var(--md-sys-color-outline-variant)',
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '12px'
+                    }}
+                  >
+                    <div style={{ flex: '1 1 240px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <span style={{
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          padding: '2px 8px',
+                          borderRadius: '6px',
+                          backgroundColor: 'rgba(110, 136, 66, 0.25)',
+                          color: '#DEEAC1',
+                          border: '1px solid rgba(137, 168, 84, 0.5)'
+                        }}>
+                          {tpl.category_tag || 'General'}
+                        </span>
+                        <h4 style={{ fontSize: '16px', fontWeight: 700, color: '#FFF', margin: 0 }}>
+                          {tpl.title}
+                        </h4>
+                      </div>
+
+                      {tpl.description && (
+                        <p style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', margin: '4px 0' }}>
+                          {tpl.description}
+                        </p>
+                      )}
+
+                      <div style={{ fontSize: '11px', color: 'var(--md-sys-color-tertiary)', marginTop: '4px' }}>
+                        {tpl.template_exercises?.length || 0} ejercicios prescritos · Creada por {tpl.coach_name || 'Coach'}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        onClick={() => handleLoadTemplateIntoForm(tpl)}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: '10px',
+                          background: 'linear-gradient(135deg, #6E8842 0%, #586E33 100%)',
+                          color: '#FFF',
+                          border: '1px solid rgba(137, 168, 84, 0.4)',
+                          fontSize: '12.5px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <Sparkles size={14} />
+                        Usar Plantilla
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteTemplate(tpl.id)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--md-sys-color-outline)',
+                          cursor: 'pointer',
+                          padding: '6px'
+                        }}
+                        title="Eliminar plantilla"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

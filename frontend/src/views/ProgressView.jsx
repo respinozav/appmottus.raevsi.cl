@@ -10,14 +10,20 @@ import {
   Minus,
   Dumbbell,
   Flame,
-  Award
+  Award,
+  Utensils,
+  Droplets,
+  Footprints,
+  Moon,
+  Check,
+  AlertCircle
 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export const ProgressView = () => {
   const { user } = useAuth();
-  const [activeSubTab, setActiveSubTab] = useState('body'); // 'body' | 'strength'
+  const [activeSubTab, setActiveSubTab] = useState('body'); // 'body' | 'strength' | 'habits'
 
   // Body metrics states
   const [metrics, setMetrics] = useState([]);
@@ -38,6 +44,21 @@ export const ProgressView = () => {
   const [selectedExerciseId, setSelectedExerciseId] = useState('');
   const [strengthAnalysis, setStrengthAnalysis] = useState(null);
   const [loadingStrength, setLoadingStrength] = useState(false);
+
+  // Daily Habits states
+  const [habitsHistory, setHabitsHistory] = useState([]);
+  const [loadingHabits, setLoadingHabits] = useState(false);
+  const [habitForm, setHabitForm] = useState({
+    log_date: new Date().toISOString().split('T')[0],
+    kcal_consumed: '',
+    protein_grams: '',
+    water_liters: '',
+    steps: '',
+    sleep_hours: '',
+    notes: ''
+  });
+  const [savingHabit, setSavingHabit] = useState(false);
+  const [habitMsg, setHabitMsg] = useState({ type: '', text: '' });
 
   const fetchMetrics = async () => {
     setLoading(true);
@@ -79,9 +100,67 @@ export const ProgressView = () => {
     }
   };
 
+  const fetchHabits = async () => {
+    if (!user?.id) return;
+    setLoadingHabits(true);
+    try {
+      const res = await api.get(`/metrics/habits/${user.id}`);
+      setHabitsHistory(res.data);
+      // Pre-cargar valores de hoy si ya existen
+      const today = new Date().toISOString().split('T')[0];
+      const todayHabit = res.data.find(h => h.log_date === today);
+      if (todayHabit) {
+        setHabitForm({
+          log_date: todayHabit.log_date,
+          kcal_consumed: todayHabit.kcal_consumed ?? '',
+          protein_grams: todayHabit.protein_grams ?? '',
+          water_liters: todayHabit.water_liters ?? '',
+          steps: todayHabit.steps ?? '',
+          sleep_hours: todayHabit.sleep_hours ?? '',
+          notes: todayHabit.notes ?? ''
+        });
+      }
+    } catch (err) {
+      console.error('Error al cargar hábitos diarios:', err);
+    } finally {
+      setLoadingHabits(false);
+    }
+  };
+
+  const handleSaveHabit = async (e) => {
+    e.preventDefault();
+    setSavingHabit(true);
+    setHabitMsg({ type: '', text: '' });
+
+    try {
+      const payload = {
+        log_date: habitForm.log_date || new Date().toISOString().split('T')[0],
+        kcal_consumed: habitForm.kcal_consumed !== '' ? parseInt(habitForm.kcal_consumed) : null,
+        protein_grams: habitForm.protein_grams !== '' ? parseInt(habitForm.protein_grams) : null,
+        water_liters: habitForm.water_liters !== '' ? parseFloat(habitForm.water_liters) : null,
+        steps: habitForm.steps !== '' ? parseInt(habitForm.steps) : null,
+        sleep_hours: habitForm.sleep_hours !== '' ? parseFloat(habitForm.sleep_hours) : null,
+        notes: habitForm.notes.trim() || null
+      };
+
+      await api.post('/metrics/habits', payload);
+      setHabitMsg({ type: 'success', text: '¡Hábitos del día registrados con éxito!' });
+      fetchHabits();
+      setTimeout(() => setHabitMsg({ type: '', text: '' }), 2500);
+    } catch (err) {
+      setHabitMsg({
+        type: 'error',
+        text: err.response?.data?.detail || 'Error al guardar hábitos diarios.'
+      });
+    } finally {
+      setSavingHabit(false);
+    }
+  };
+
   useEffect(() => {
     fetchMetrics();
     fetchLoggedExercises();
+    fetchHabits();
   }, [user?.id]);
 
   const handleSelectExercise = (exerciseId) => {
@@ -385,6 +464,27 @@ export const ProgressView = () => {
         >
           <Dumbbell size={18} />
           Mi Fuerza / RMs (1RM)
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('habits')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 20px',
+            borderRadius: '12px',
+            border: 'none',
+            cursor: 'pointer',
+            fontWeight: 700,
+            fontSize: '14px',
+            backgroundColor: activeSubTab === 'habits' ? 'var(--md-sys-color-primary)' : 'transparent',
+            color: activeSubTab === 'habits' ? '#FFF' : 'var(--md-sys-color-on-surface-variant)',
+            boxShadow: activeSubTab === 'habits' ? '0 2px 10px rgba(110, 136, 66, 0.35)' : 'none'
+          }}
+        >
+          <Utensils size={18} />
+          Hábitos & Nutrición
         </button>
       </div>
 
@@ -756,6 +856,291 @@ export const ProgressView = () => {
               Completa tus entrenamientos serie por serie en "Mis Rutinas" para empezar a generar tu historial de fuerza.
             </div>
           )}
+        </div>
+      )}
+
+      {/* TAB 3: HÁBITOS & NUTRICIÓN */}
+      {activeSubTab === 'habits' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+          {/* Metas configuradas por el Coach */}
+          <div>
+            <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#FFF', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Award size={18} color="var(--md-sys-color-primary-light)" />
+              Mis Metas Diarias (Prescritas por el Coach)
+            </h3>
+            <div className="responsive-kpi-grid">
+              <div className="md-card" style={{ padding: '18px', textAlign: 'center' }}>
+                <span style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block' }}>Calorías Objetivo</span>
+                <span style={{ fontSize: '24px', fontWeight: 800, color: '#DEEAC1' }}>
+                  {user?.daily_kcal_target ? `${user.daily_kcal_target} kcal` : 'Sin meta'}
+                </span>
+              </div>
+              <div className="md-card" style={{ padding: '18px', textAlign: 'center' }}>
+                <span style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block' }}>Proteína Objetivo</span>
+                <span style={{ fontSize: '24px', fontWeight: 800, color: '#DEEAC1' }}>
+                  {user?.daily_protein_target ? `${user.daily_protein_target} g` : 'Sin meta'}
+                </span>
+              </div>
+              <div className="md-card" style={{ padding: '18px', textAlign: 'center' }}>
+                <span style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block' }}>Agua Diaria</span>
+                <span style={{ fontSize: '24px', fontWeight: 800, color: '#DEEAC1' }}>
+                  {user?.daily_water_liters_target ? `${user.daily_water_liters_target} L` : 'Sin meta'}
+                </span>
+              </div>
+              <div className="md-card" style={{ padding: '18px', textAlign: 'center' }}>
+                <span style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block' }}>Pasos Diarios</span>
+                <span style={{ fontSize: '24px', fontWeight: 800, color: '#DEEAC1' }}>
+                  {user?.daily_steps_target ? user.daily_steps_target.toLocaleString() : 'Sin meta'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Formulario Registro de Hábitos del Día */}
+          <div className="md-card" style={{ padding: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '10px' }}>
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#FFF', margin: 0 }}>
+                  Registrar / Actualizar Hábitos Diarios
+                </h3>
+                <span style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                  Lleva control de tu ingesta calórica, macronutrientes, hidratación y descanso.
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}>Fecha:</label>
+                <input
+                  type="date"
+                  value={habitForm.log_date}
+                  onChange={(e) => {
+                    const newDate = e.target.value;
+                    const existing = habitsHistory.find(h => h.log_date === newDate);
+                    setHabitForm({
+                      log_date: newDate,
+                      kcal_consumed: existing ? (existing.kcal_consumed ?? '') : '',
+                      protein_grams: existing ? (existing.protein_grams ?? '') : '',
+                      water_liters: existing ? (existing.water_liters ?? '') : '',
+                      steps: existing ? (existing.steps ?? '') : '',
+                      sleep_hours: existing ? (existing.sleep_hours ?? '') : '',
+                      notes: existing ? (existing.notes ?? '') : ''
+                    });
+                  }}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(255,255,255,0.06)',
+                    border: '1px solid var(--md-sys-color-outline-variant)',
+                    color: '#FFF',
+                    fontSize: '13px'
+                  }}
+                />
+              </div>
+            </div>
+
+            {habitMsg.text && (
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: '10px',
+                marginBottom: '16px',
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                backgroundColor: habitMsg.type === 'success' ? 'rgba(110, 136, 66, 0.2)' : 'rgba(255, 180, 171, 0.15)',
+                color: habitMsg.type === 'success' ? '#DEEAC1' : 'var(--md-sys-color-error)',
+                border: `1px solid ${habitMsg.type === 'success' ? 'rgba(110, 136, 66, 0.4)' : 'rgba(255, 180, 171, 0.3)'}`
+              }}>
+                {habitMsg.type === 'success' ? <Check size={16} /> : <AlertCircle size={16} />}
+                {habitMsg.text}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveHabit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="responsive-grid-2col" style={{ gap: '14px' }}>
+                <div>
+                  <label style={labelStyle}>🔥 Calorías Consumidas (kcal)</label>
+                  <input
+                    type="number"
+                    step="10"
+                    placeholder="Ej: 2350"
+                    value={habitForm.kcal_consumed}
+                    onChange={(e) => setHabitForm({ ...habitForm, kcal_consumed: e.target.value })}
+                    style={inputStyle}
+                  />
+                  {user?.daily_kcal_target && habitForm.kcal_consumed && (
+                    <div style={{ marginTop: '4px', fontSize: '11px', color: 'var(--md-sys-color-primary-light)' }}>
+                      {Math.round((parseInt(habitForm.kcal_consumed) / user.daily_kcal_target) * 100)}% de tu meta diaria ({user.daily_kcal_target} kcal)
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label style={labelStyle}>🥩 Proteína Ingerida (gramos)</label>
+                  <input
+                    type="number"
+                    step="5"
+                    placeholder="Ej: 155"
+                    value={habitForm.protein_grams}
+                    onChange={(e) => setHabitForm({ ...habitForm, protein_grams: e.target.value })}
+                    style={inputStyle}
+                  />
+                  {user?.daily_protein_target && habitForm.protein_grams && (
+                    <div style={{ marginTop: '4px', fontSize: '11px', color: 'var(--md-sys-color-primary-light)' }}>
+                      {Math.round((parseInt(habitForm.protein_grams) / user.daily_protein_target) * 100)}% de tu meta ({user.daily_protein_target} g)
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="responsive-grid-2col" style={{ gap: '14px' }}>
+                <div>
+                  <label style={labelStyle}>💧 Agua Ingerida (Litros)</label>
+                  <input
+                    type="number"
+                    step="0.25"
+                    placeholder="Ej: 2.5"
+                    value={habitForm.water_liters}
+                    onChange={(e) => setHabitForm({ ...habitForm, water_liters: e.target.value })}
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div>
+                  <label style={labelStyle}>👟 Pasos Caminados</label>
+                  <input
+                    type="number"
+                    step="500"
+                    placeholder="Ej: 8500"
+                    value={habitForm.steps}
+                    onChange={(e) => setHabitForm({ ...habitForm, steps: e.target.value })}
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+
+              <div className="responsive-grid-2col" style={{ gap: '14px' }}>
+                <div>
+                  <label style={labelStyle}>🌙 Horas de Sueño</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    placeholder="Ej: 7.5"
+                    value={habitForm.sleep_hours}
+                    onChange={(e) => setHabitForm({ ...habitForm, sleep_hours: e.target.value })}
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Notas / Sensaciones del Día</label>
+                  <input
+                    type="text"
+                    placeholder="Ej: Buen nivel de energía, hidratación completa"
+                    value={habitForm.notes}
+                    onChange={(e) => setHabitForm({ ...habitForm, notes: e.target.value })}
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
+                <button
+                  type="submit"
+                  disabled={savingHabit}
+                  style={{
+                    padding: '10px 24px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #6E8842 0%, #586E33 100%)',
+                    color: '#FFF',
+                    border: '1px solid rgba(137, 168, 84, 0.4)',
+                    fontWeight: 700,
+                    cursor: savingHabit ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 16px rgba(110, 136, 66, 0.4)'
+                  }}
+                >
+                  {savingHabit ? 'Guardando...' : 'Guardar Hábitos del Día'}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Historial de Hábitos Anteriores */}
+          <div>
+            <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#FFF', marginBottom: '14px' }}>
+              Historial de Hábitos Recientes ({habitsHistory.length} días)
+            </h3>
+            {loadingHabits ? (
+              <div style={{ textAlign: 'center', padding: '36px', color: 'var(--md-sys-color-tertiary)' }}>
+                Cargando historial de hábitos...
+              </div>
+            ) : habitsHistory.length === 0 ? (
+              <div className="md-card" style={{ padding: '36px', textAlign: 'center', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                Aún no has registrado hábitos diarios. Completa el formulario de arriba para iniciar tu registro.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {habitsHistory.map((h) => (
+                  <div
+                    key={h.id}
+                    className="md-card"
+                    style={{
+                      padding: '16px 20px',
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '12px'
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontSize: '15px', fontWeight: 800, color: '#FFF', display: 'block' }}>
+                        📅 {h.log_date}
+                      </span>
+                      {h.notes && (
+                        <span style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', fontStyle: 'italic' }}>
+                          "{h.notes}"
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '13px' }}>
+                      {h.kcal_consumed !== null && (
+                        <div>
+                          <span style={{ fontSize: '10px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block' }}>Calorías</span>
+                          <span style={{ fontWeight: 700, color: '#DEEAC1' }}>{h.kcal_consumed} kcal</span>
+                        </div>
+                      )}
+                      {h.protein_grams !== null && (
+                        <div>
+                          <span style={{ fontSize: '10px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block' }}>Proteína</span>
+                          <span style={{ fontWeight: 700, color: '#DEEAC1' }}>{h.protein_grams} g</span>
+                        </div>
+                      )}
+                      {h.water_liters !== null && (
+                        <div>
+                          <span style={{ fontSize: '10px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block' }}>Agua</span>
+                          <span style={{ fontWeight: 700, color: '#DEEAC1' }}>{h.water_liters} L</span>
+                        </div>
+                      )}
+                      {h.steps !== null && (
+                        <div>
+                          <span style={{ fontSize: '10px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block' }}>Pasos</span>
+                          <span style={{ fontWeight: 700, color: '#DEEAC1' }}>{h.steps.toLocaleString()}</span>
+                        </div>
+                      )}
+                      {h.sleep_hours !== null && (
+                        <div>
+                          <span style={{ fontSize: '10px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block' }}>Sueño</span>
+                          <span style={{ fontWeight: 700, color: '#DEEAC1' }}>{h.sleep_hours} hrs</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

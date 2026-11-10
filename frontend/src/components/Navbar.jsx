@@ -1,9 +1,73 @@
-import React from 'react';
-import { Dumbbell, UserCheck, CalendarCheck, LogOut, TrendingUp, BarChart3 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Dumbbell, UserCheck, CalendarCheck, LogOut, TrendingUp, BarChart3, User as UserIcon, Lock, KeyRound, Check, X, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 export const Navbar = ({ activeTab, setActiveTab }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    current_password: '',
+    new_password: ''
+  });
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileMsg, setProfileMsg] = useState({ type: '', text: '' });
+
+  const openProfileModal = () => {
+    setProfileForm({
+      name: user?.name || '',
+      email: user?.email || '',
+      phone: user?.phone || '',
+      current_password: '',
+      new_password: ''
+    });
+    setProfileMsg({ type: '', text: '' });
+    setIsProfileOpen(true);
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    setSavingProfile(true);
+    setProfileMsg({ type: '', text: '' });
+
+    try {
+      const payload = {
+        name: profileForm.name.trim() || undefined,
+        email: profileForm.email.trim() || undefined,
+        phone: profileForm.phone.trim() || undefined,
+      };
+
+      if (profileForm.new_password) {
+        if (!profileForm.current_password) {
+          setProfileMsg({ type: 'error', text: 'Ingresa tu contraseña actual para cambiarla.' });
+          setSavingProfile(false);
+          return;
+        }
+        payload.current_password = profileForm.current_password;
+        payload.new_password = profileForm.new_password;
+      }
+
+      const res = await api.put('/auth/profile', payload);
+      updateUser(res.data);
+      setProfileMsg({ type: 'success', text: '¡Perfil actualizado con éxito!' });
+      setProfileForm(prev => ({ ...prev, current_password: '', new_password: '' }));
+      setTimeout(() => {
+        setIsProfileOpen(false);
+        setProfileMsg({ type: '', text: '' });
+      }, 1400);
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setProfileMsg({
+        type: 'error',
+        text: typeof detail === 'string' ? detail : 'Error al guardar cambios de perfil.'
+      });
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   const roleBadge = {
     admin: { label: 'Admin', bg: 'rgba(110, 136, 66, 0.25)', border: '1px solid rgba(137, 168, 84, 0.5)', text: '#DEEAC1' },
@@ -135,6 +199,35 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
           </div>
 
           <button
+            onClick={openProfileModal}
+            title="Mi Perfil y Contraseña"
+            aria-label="Mi Perfil y Contraseña"
+            style={{
+              background: 'var(--md-sys-color-surface-variant)',
+              border: '1px solid var(--md-sys-color-outline-variant)',
+              color: 'var(--md-sys-color-on-surface-variant)',
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s',
+              touchAction: 'manipulation'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(110, 136, 66, 0.25)';
+              e.currentTarget.style.color = '#DEEAC1';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--md-sys-color-surface-variant)';
+              e.currentTarget.style.color = 'var(--md-sys-color-on-surface-variant)';
+            }}
+          >
+            <UserIcon size={17} />
+          </button>
+
+          <button
             onClick={logout}
             title="Cerrar sesión"
             aria-label="Cerrar sesión"
@@ -209,6 +302,230 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
           );
         })}
       </nav>
+
+      {/* Modal Mi Perfil y Seguridad */}
+      {isProfileOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '16px'
+        }}>
+          <div className="glass-panel" style={{
+            width: '100%',
+            maxWidth: '460px',
+            backgroundColor: 'var(--md-sys-color-surface-container-high)',
+            borderRadius: '20px',
+            padding: '24px',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+            border: '1px solid rgba(110, 136, 66, 0.3)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(110, 136, 66, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--md-sys-color-primary-light)'
+                }}>
+                  <UserIcon size={20} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#FFF', margin: 0 }}>Mi Perfil</h3>
+                  <span style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                    RUT: {user?.rut} ({roleBadge.label})
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsProfileOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--md-sys-color-on-surface-variant)',
+                  cursor: 'pointer',
+                  padding: '4px'
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {profileMsg.text && (
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: '10px',
+                marginBottom: '16px',
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                backgroundColor: profileMsg.type === 'success' ? 'rgba(110, 136, 66, 0.2)' : 'rgba(255, 180, 171, 0.15)',
+                color: profileMsg.type === 'success' ? '#DEEAC1' : 'var(--md-sys-color-error)',
+                border: `1px solid ${profileMsg.type === 'success' ? 'rgba(110, 136, 66, 0.4)' : 'rgba(255, 180, 171, 0.3)'}`
+              }}>
+                {profileMsg.type === 'success' ? <Check size={16} /> : <AlertCircle size={16} />}
+                {profileMsg.text}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block', marginBottom: '4px' }}>
+                  Nombre Completo
+                </label>
+                <input
+                  type="text"
+                  value={profileForm.name}
+                  onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '10px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#FFF',
+                    fontSize: '14px'
+                  }}
+                  placeholder="Tu nombre completo"
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block', marginBottom: '4px' }}>
+                  Correo Electrónico
+                </label>
+                <input
+                  type="email"
+                  value={profileForm.email}
+                  onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '10px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#FFF',
+                    fontSize: '14px'
+                  }}
+                  placeholder="correo@ejemplo.com"
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block', marginBottom: '4px' }}>
+                  Teléfono / WhatsApp
+                </label>
+                <input
+                  type="text"
+                  value={profileForm.phone}
+                  onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '10px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#FFF',
+                    fontSize: '14px'
+                  }}
+                  placeholder="+56 9 1234 5678"
+                />
+              </div>
+
+              <div style={{
+                marginTop: '6px',
+                paddingTop: '14px',
+                borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+              }}>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--md-sys-color-primary-light)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                  <Lock size={14} /> Cambiar Contraseña (Opcional)
+                </span>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <input
+                    type="password"
+                    value={profileForm.current_password}
+                    onChange={(e) => setProfileForm({ ...profileForm, current_password: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      color: '#FFF',
+                      fontSize: '13px'
+                    }}
+                    placeholder="Contraseña actual"
+                    autoComplete="current-password"
+                  />
+                  <input
+                    type="password"
+                    value={profileForm.new_password}
+                    onChange={(e) => setProfileForm({ ...profileForm, new_password: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      color: '#FFF',
+                      fontSize: '13px'
+                    }}
+                    placeholder="Nueva contraseña (mínimo 6 caracteres)"
+                    autoComplete="new-password"
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsProfileOpen(false)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    backgroundColor: 'transparent',
+                    color: 'var(--md-sys-color-on-surface)',
+                    cursor: 'pointer',
+                    fontSize: '13px'
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingProfile}
+                  className="btn-primary"
+                  style={{
+                    padding: '8px 18px',
+                    borderRadius: '10px',
+                    fontSize: '13px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  {savingProfile ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 };

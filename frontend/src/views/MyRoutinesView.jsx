@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   Calendar, 
   CheckCircle, 
+  CheckCircle2,
+  Circle,
   Play, 
   Dumbbell, 
   Send, 
@@ -10,7 +12,11 @@ import {
   Activity, 
   Check, 
   ChevronDown, 
-  ChevronUp
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  LayoutList,
+  CalendarDays
 } from 'lucide-react';
 import api from '../services/api';
 import { VideoModal } from '../components/VideoModal';
@@ -20,6 +26,10 @@ export const MyRoutinesView = () => {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
   const [videoExercise, setVideoExercise] = useState(null);
+
+  // View Mode: 'list' | 'calendar'
+  const [viewMode, setViewMode] = useState('list');
+  const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
 
   // Expanded routine cards map: { [routineId]: boolean }
   const [expandedRoutines, setExpandedRoutines] = useState({});
@@ -174,6 +184,42 @@ export const MyRoutinesView = () => {
     }
   };
 
+  const getWeekDays = (offset = 0) => {
+    const curr = new Date();
+    const dayOfWeek = curr.getDay();
+    const distanceToMonday = (dayOfWeek + 6) % 7;
+    const monday = new Date(curr);
+    monday.setDate(curr.getDate() - distanceToMonday + offset * 7);
+    monday.setHours(0, 0, 0, 0);
+
+    const days = [];
+    const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const isToday = new Date().toDateString() === d.toDateString();
+      const dateStr = d.toISOString().split('T')[0];
+
+      const daysRoutines = routines.filter(r => {
+        const rDate = new Date(r.scheduled_at).toISOString().split('T')[0];
+        return rDate === dateStr;
+      });
+
+      days.push({
+        dateObj: d,
+        dateStr,
+        dayName: dayNames[i],
+        dayNumber: d.getDate(),
+        monthName: d.toLocaleDateString('es-CL', { month: 'short' }),
+        isToday,
+        routines: daysRoutines
+      });
+    }
+
+    return days;
+  };
+
   return (
     <div className="view-container">
       {/* Header */}
@@ -188,26 +234,231 @@ export const MyRoutinesView = () => {
         </div>
       </div>
 
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '64px', color: 'var(--md-sys-color-tertiary)' }}>
-          Cargando tus rutinas personalizadas...
-        </div>
-      ) : routines.length === 0 ? (
+      {/* Mode Switcher: List vs Weekly Calendar */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '20px',
+        flexWrap: 'wrap',
+        gap: '12px'
+      }}>
         <div style={{
-          textAlign: 'center',
-          padding: '64px 20px',
-          backgroundColor: 'var(--md-sys-color-surface)',
-          borderRadius: '24px',
+          display: 'inline-flex',
+          backgroundColor: 'var(--md-sys-color-surface-variant)',
+          borderRadius: '12px',
+          padding: '4px',
           border: '1px solid var(--md-sys-color-outline-variant)'
         }}>
-          <Dumbbell size={52} color="var(--md-sys-color-secondary)" style={{ margin: '0 auto 16px' }} />
-          <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#FFF' }}>Aún no tienes rutinas programadas</h3>
-          <p style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '6px' }}>
-            Tu Coach de Mottus Gym te asignará una sesión muy pronto. ¡Mantente atento!
-          </p>
+          <button
+            onClick={() => setViewMode('list')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 14px',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 600,
+              backgroundColor: viewMode === 'list' ? 'var(--md-sys-color-primary)' : 'transparent',
+              color: viewMode === 'list' ? '#FFF' : 'var(--md-sys-color-on-surface-variant)',
+              transition: 'all 0.2s'
+            }}
+          >
+            <LayoutList size={16} />
+            Vista Lista ({routines.length})
+          </button>
+          <button
+            onClick={() => setViewMode('calendar')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 14px',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 600,
+              backgroundColor: viewMode === 'calendar' ? 'var(--md-sys-color-primary)' : 'transparent',
+              color: viewMode === 'calendar' ? '#FFF' : 'var(--md-sys-color-on-surface-variant)',
+              transition: 'all 0.2s'
+            }}
+          >
+            <CalendarDays size={16} />
+            Calendario Semanal
+          </button>
         </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+        {viewMode === 'calendar' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              onClick={() => setCurrentWeekOffset(prev => prev - 1)}
+              style={{
+                padding: '6px 10px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(255,255,255,0.06)',
+                border: '1px solid var(--md-sys-color-outline-variant)',
+                color: '#FFF',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+              title="Semana anterior"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              onClick={() => setCurrentWeekOffset(0)}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '8px',
+                backgroundColor: currentWeekOffset === 0 ? 'rgba(110, 136, 66, 0.25)' : 'rgba(255,255,255,0.06)',
+                border: currentWeekOffset === 0 ? '1px solid rgba(137, 168, 84, 0.5)' : '1px solid var(--md-sys-color-outline-variant)',
+                color: currentWeekOffset === 0 ? '#DEEAC1' : '#FFF',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 600
+              }}
+            >
+              Semana Actual
+            </button>
+            <button
+              onClick={() => setCurrentWeekOffset(prev => prev + 1)}
+              style={{
+                padding: '6px 10px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(255,255,255,0.06)',
+                border: '1px solid var(--md-sys-color-outline-variant)',
+                color: '#FFF',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+              title="Semana siguiente"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Weekly Calendar Grid (Alumno) */}
+      {viewMode === 'calendar' && (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+          gap: '12px',
+          marginBottom: '28px'
+        }}>
+          {getWeekDays(currentWeekOffset).map((day) => (
+            <div
+              key={day.dateStr}
+              style={{
+                backgroundColor: day.isToday ? 'rgba(110, 136, 66, 0.15)' : 'var(--md-sys-color-surface-variant)',
+                borderRadius: '16px',
+                border: day.isToday ? '1px solid rgba(137, 168, 84, 0.6)' : '1px solid var(--md-sys-color-outline-variant)',
+                padding: '14px',
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: '240px',
+                boxShadow: day.isToday ? '0 0 16px rgba(110, 136, 66, 0.2)' : 'none'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <div>
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: day.isToday ? 'var(--md-sys-color-primary-light)' : '#FFF' }}>
+                    {day.dayName}
+                  </span>
+                  <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block' }}>
+                    {day.dayNumber} {day.monthName}
+                  </span>
+                </div>
+                {day.isToday && (
+                  <span style={{
+                    fontSize: '10px',
+                    fontWeight: 800,
+                    backgroundColor: 'rgba(110, 136, 66, 0.3)',
+                    color: '#DEEAC1',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    border: '1px solid rgba(137, 168, 84, 0.5)'
+                  }}>
+                    HOY
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                {day.routines.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '24px 8px', color: 'var(--md-sys-color-outline)', fontSize: '12px' }}>
+                    Descanso
+                  </div>
+                ) : (
+                  day.routines.map((r) => (
+                    <div
+                      key={r.id}
+                      onClick={() => {
+                        setExpandedRoutines(prev => ({ ...prev, [r.id]: true }));
+                        setViewMode('list');
+                      }}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: '10px',
+                        backgroundColor: r.is_executed ? 'rgba(110, 136, 66, 0.25)' : 'rgba(0,0,0,0.35)',
+                        border: r.is_executed ? '1px solid rgba(137, 168, 84, 0.5)' : '1px solid var(--md-sys-color-outline-variant)',
+                        cursor: 'pointer',
+                        transition: 'transform 0.15s'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                      onMouseOut={(e) => e.currentTarget.style.transform = 'none'}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                        {r.is_executed ? (
+                          <CheckCircle2 size={13} color="var(--md-sys-color-secondary)" />
+                        ) : (
+                          <Circle size={13} color="var(--md-sys-color-outline)" />
+                        )}
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#FFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {r.title}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: '10px', color: 'var(--md-sys-color-primary-light)', display: 'block' }}>
+                        {r.routine_exercises?.length || 0} ejercicios · {r.is_executed ? 'Completada' : 'Toca para entrenar'}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Routine Cards List (Visible in List Mode) */}
+      {viewMode === 'list' && (
+        loading ? (
+            <div style={{ textAlign: 'center', padding: '64px', color: 'var(--md-sys-color-tertiary)' }}>
+              Cargando tus rutinas personalizadas...
+            </div>
+          ) : routines.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '64px 20px',
+              backgroundColor: 'var(--md-sys-color-surface)',
+              borderRadius: '24px',
+              border: '1px solid var(--md-sys-color-outline-variant)'
+            }}>
+              <Dumbbell size={52} color="var(--md-sys-color-secondary)" style={{ margin: '0 auto 16px' }} />
+              <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#FFF' }}>Aún no tienes rutinas programadas</h3>
+              <p style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '6px' }}>
+                Tu Coach de Mottus Gym te asignará una sesión muy pronto. ¡Mantente atento!
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {routines.map((routine) => {
             const isExpanded = !!expandedRoutines[routine.id];
             const dateObj = new Date(routine.scheduled_at);
@@ -727,7 +978,7 @@ export const MyRoutinesView = () => {
             );
           })}
         </div>
-      )}
+      ))}
 
       {/* Video Modal */}
       <VideoModal

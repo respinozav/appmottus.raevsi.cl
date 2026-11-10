@@ -11,7 +11,9 @@ from app.models.models import (
     User, 
     Student, 
     ExerciseLog, 
-    RoutineComment
+    RoutineComment,
+    RoutineTemplate,
+    RoutineTemplateExercise
 )
 from app.schemas.schemas import (
     RoutineCreate, 
@@ -20,7 +22,10 @@ from app.schemas.schemas import (
     RoutineStatusUpdate,
     ExerciseLogBatchUpsert,
     RoutineCommentCreate,
-    RoutineCommentOut
+    RoutineCommentOut,
+    RoutineTemplateCreate,
+    RoutineTemplateOut,
+    RoutineTemplateSaveFromExisting
 )
 from app.api.deps import get_current_user, require_coach
 
@@ -126,6 +131,154 @@ def create_and_assign_routine(
     db.commit()
 
     return get_routine_eager_query(db, main_routine.id)
+
+def format_template_dict(t: RoutineTemplate) -> dict:
+    return {
+        "id": t.id,
+        "coach_id": t.coach_id,
+        "coach_name": t.coach.name if t.coach else "Coach Mottus",
+        "title": t.title,
+        "description": t.description,
+        "category_tag": t.category_tag or "General",
+        "created_at": t.created_at,
+        "template_exercises": [
+            {
+                "id": te.id,
+                "template_id": te.template_id,
+                "exercise_id": te.exercise_id,
+                "exercise_name": te.exercise.name if te.exercise else "Ejercicio",
+                "order_index": te.order_index,
+                "superset_group": te.superset_group,
+                "series": te.series,
+                "repetitions": te.repetitions,
+                "rest_seconds": te.rest_seconds,
+                "target_weight": float(te.target_weight) if te.target_weight is not None else None,
+                "target_rpe": float(te.target_rpe) if te.target_rpe is not None else None,
+                "tempo": te.tempo,
+                "coach_notes": te.coach_notes,
+                "created_at": te.created_at
+            }
+            for te in t.template_exercises
+        ]
+    }
+
+@router.get("/templates", response_model=List[RoutineTemplateOut])
+def list_routine_templates(
+    db: Session = Depends(get_db),
+    current_coach: User = Depends(require_coach)
+):
+    """
+    Lista las plantillas de entrenamiento maestras disponibles para el Coach.
+    """
+    templates = db.query(RoutineTemplate)\
+        .options(
+            joinedload(RoutineTemplate.coach),
+            joinedload(RoutineTemplate.template_exercises).joinedload(RoutineTemplateExercise.exercise)
+        )\
+        .order_by(RoutineTemplate.created_at.desc())\
+        .all()
+    return [format_template_dict(t) for t in templates]
+
+@router.post("/templates", response_model=RoutineTemplateOut)
+def create_routine_template(
+    data: RoutineTemplateCreate,
+    db: Session = Depends(get_db),
+    current_coach: User = Depends(require_coach)
+):
+    """
+    Crea una nueva plantilla de entrenamiento maestra con sus ejercicios prescritos.
+    """
+    template = RoutineTemplate(
+        coach_id=current_coach.id,
+        title=data.title,
+        description=data.description,
+        category_tag=data.category_tag or "General"
+    )
+    db.add(template)
+    db.flush()
+
+    for idx, item in enumerate(data.exercises):
+        t_ex = RoutineTemplateExercise(
+            template_id=template.id,
+            exercise_id=item.exercise_id,
+            order_index=item.order_index if item.order_index is not None else (idx + 1),
+            superset_group=item.superset_group.strip().upper() if item.superset_group else None,
+            series=item.series or 3,
+            repetitions=item.repetitions or "12 reps",
+            rest_seconds=item.rest_seconds or 60,
+            target_weight=item.target_weight,
+            target_rpe=item.target_rpe,
+            tempo=item.tempo,
+            coach_notes=item.coach_notes
+        )
+        db.add(t_ex)
+
+    db.commit()
+    db.refresh(template)
+    return format_template_dict(template)
+
+@router.post("/from-existing/{routine_id}/save-template", response_model=RoutineTemplateOut)
+def save_routine_as_template(
+    routine_id: UUID,
+    data: RoutineTemplateSaveFromExisting,
+    db: Session = Depends(get_db),
+    current_coach: User = Depends(require_coach)
+):
+    """
+    Convierte cualquier rutina existente en una plantilla de entrenamiento reutilizable.
+    """
+    routine = db.query(Routine).filter(Routine.id == routine_id).first()
+    if not routine:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rutina de origen no encontrada.")
+
+    template = RoutineTemplate(
+        coach_id=current_coach.id,
+        title=data.title or f"Plantilla - {routine.title}",
+        description=data.description or routine.notes,
+        category_tag=data.category_tag or "General"
+    )
+    db.add(template)
+    db.flush()
+
+    for r_ex in routine.routine_exercises:
+        t_ex = RoutineTemplateExercise(
+            template_id=template.id,
+            exercise_id=r_ex.exercise_id,
+            order_index=r_ex.order_index,
+            superset_group=r_ex.superset_group,
+            series=r_ex.series,
+            repetitions=r_ex.repetitions,
+            rest_seconds=r_ex.rest_seconds,
+            target_weight=r_ex.target_weight,
+            target_rpe=r_ex.target_rpe,
+            tempo=r_ex.tempo,
+            coach_notes=r_ex.coach_notes
+        )
+        db.add(t_ex)
+
+    db.commit()
+    db.refresh(template)
+    return format_template_dict(template)
+
+@router.delete("/templates/{template_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_routine_template(
+    template_id: UUID,
+    db: Session = Depends(get_db),
+    current_coach: User = Depends(require_coach)
+):
+    """
+    Elimina una plantilla de entrenamiento.
+    """
+    template = db.query(RoutineTemplate).filter(RoutineTemplate.id == template_id).first()
+    if not template:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plantilla no encontrada.")
+
+    if current_coach.role != "admin" and template.coach_id != current_coach.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tienes permisos para eliminar esta plantilla.")
+
+    db.delete(template)
+    db.commit()
+    return None
 
 @router.put("/{routine_id}", response_model=RoutineOut)
 def update_routine(

@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Boolean, Numeric, DateTime, ForeignKey, Text, Integer
+from sqlalchemy import Column, String, Boolean, Numeric, DateTime, Date, ForeignKey, Text, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -57,6 +57,7 @@ class User(Base):
 
     created_exercises = relationship("Exercise", back_populates="creator")
     coached_routines = relationship("Routine", back_populates="coach", foreign_keys="Routine.coach_id")
+    routine_templates = relationship("RoutineTemplate", back_populates="coach", cascade="all, delete-orphan")
 
 class Student(Base):
     """
@@ -77,6 +78,16 @@ class Student(Base):
     height = Column(Numeric(5, 2), nullable=True)
     registration_token = Column(String(255), unique=True, nullable=True, index=True)
     is_registered = Column(Boolean, default=False, nullable=False)
+    
+    # Membresía y Objetivos Diarios (TrueCoach Phase 2)
+    plan_name = Column(String(100), default="Plan Estándar", nullable=True)
+    membership_expires_at = Column(Date, nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    daily_kcal_target = Column(Integer, nullable=True)
+    daily_protein_target = Column(Integer, nullable=True)
+    daily_steps_target = Column(Integer, nullable=True)
+    daily_water_liters_target = Column(Numeric(3, 1), nullable=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     @property
@@ -85,6 +96,7 @@ class Student(Base):
 
     routines = relationship("Routine", back_populates="student", foreign_keys="Routine.student_id", cascade="all, delete-orphan")
     body_metrics = relationship("BodyMetric", back_populates="student", foreign_keys="BodyMetric.student_id", cascade="all, delete-orphan", order_by="BodyMetric.measured_at.desc()")
+    habits = relationship("HabitLog", back_populates="student", foreign_keys="HabitLog.student_id", cascade="all, delete-orphan", order_by="HabitLog.log_date.desc()")
 
 class Category(Base):
     __tablename__ = "categories"
@@ -111,6 +123,7 @@ class Exercise(Base):
     category = relationship("Category", back_populates="exercises")
     creator = relationship("User", back_populates="created_exercises")
     routine_associations = relationship("RoutineExercise", back_populates="exercise", cascade="all, delete-orphan")
+    template_associations = relationship("RoutineTemplateExercise", back_populates="exercise", cascade="all, delete-orphan")
 
 class Routine(Base):
     __tablename__ = "routines"
@@ -208,3 +221,64 @@ class BodyMetric(Base):
 
     student = relationship("Student", foreign_keys=[student_id], back_populates="body_metrics")
     recorder = relationship("User", foreign_keys=[recorded_by])
+
+class RoutineTemplate(Base):
+    """
+    Plantillas maestras de entrenamiento reutilizables creadas por los coaches (TrueCoach Workout Templates).
+    """
+    __tablename__ = "routine_templates"
+    __table_args__ = {"schema": "bdmottus"}
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    coach_id = Column(UUID(as_uuid=True), ForeignKey("bdmottus.users.id", ondelete="CASCADE"), nullable=False)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    category_tag = Column(String(50), default="General", nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    coach = relationship("User", back_populates="routine_templates")
+    template_exercises = relationship("RoutineTemplateExercise", back_populates="template", cascade="all, delete-orphan", order_by="RoutineTemplateExercise.order_index, RoutineTemplateExercise.created_at")
+
+class RoutineTemplateExercise(Base):
+    """
+    Prescripción de ejercicio dentro de una plantilla de entrenamiento.
+    """
+    __tablename__ = "routine_template_exercises"
+    __table_args__ = {"schema": "bdmottus"}
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    template_id = Column(UUID(as_uuid=True), ForeignKey("bdmottus.routine_templates.id", ondelete="CASCADE"), nullable=False)
+    exercise_id = Column(UUID(as_uuid=True), ForeignKey("bdmottus.exercises.id", ondelete="CASCADE"), nullable=False)
+    order_index = Column(Integer, default=1)
+    superset_group = Column(String(10), nullable=True)
+    series = Column(Integer, default=3)
+    repetitions = Column(String(50), default="12 reps")
+    rest_seconds = Column(Integer, default=60)
+    target_weight = Column(Numeric(6, 2), nullable=True)
+    target_rpe = Column(Numeric(3, 1), nullable=True)
+    tempo = Column(String(20), nullable=True)
+    coach_notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    template = relationship("RoutineTemplate", back_populates="template_exercises")
+    exercise = relationship("Exercise", back_populates="template_associations")
+
+class HabitLog(Base):
+    """
+    Registro diario de hábitos del alumno (Nutrición, Hidratación, Pasos, Sueño).
+    """
+    __tablename__ = "habit_logs"
+    __table_args__ = {"schema": "bdmottus"}
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id = Column(UUID(as_uuid=True), ForeignKey("bdmottus.students.id", ondelete="CASCADE"), nullable=False)
+    log_date = Column(Date, nullable=False, default=func.current_date())
+    kcal_consumed = Column(Integer, nullable=True)
+    protein_grams = Column(Integer, nullable=True)
+    water_liters = Column(Numeric(3, 1), nullable=True)
+    steps = Column(Integer, nullable=True)
+    sleep_hours = Column(Numeric(3, 1), nullable=True)
+    notes = Column(Text, nullable=True)
+    logged_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    student = relationship("Student", foreign_keys=[student_id], back_populates="habits")
