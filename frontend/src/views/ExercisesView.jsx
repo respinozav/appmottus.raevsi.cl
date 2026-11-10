@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Plus, Search, Filter, Dumbbell, Trash2, Video } from 'lucide-react';
+import { 
+  Play, Plus, Search, Filter, Dumbbell, Trash2, Video, 
+  Pencil, Check, X, Power, FolderCog, AlertCircle, CheckCircle2, XCircle, ToggleLeft, ToggleRight
+} from 'lucide-react';
 import api from '../services/api';
 import { VideoModal } from '../components/VideoModal';
 import { useAuth } from '../context/AuthContext';
@@ -26,10 +29,17 @@ export const ExercisesView = () => {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState('');
 
-  // Modal Create Category
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryDesc, setNewCategoryDesc] = useState('');
+  // Modal / Management Categories
+  const [showCategoryManagerModal, setShowCategoryManagerModal] = useState(false);
+  const [categoryFormOpen, setCategoryFormOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [categoryForm, setCategoryForm] = useState({
+    name: '',
+    description: '',
+    is_active: true
+  });
+  const [savingCategory, setSavingCategory] = useState(false);
+  const [categoryMsg, setCategoryMsg] = useState({ type: '', text: '' });
 
   const isCoachOrAdmin = user?.role === 'coach' || user?.role === 'admin';
 
@@ -42,8 +52,10 @@ export const ExercisesView = () => {
       ]);
       setExercises(exRes.data);
       setCategories(catRes.data);
-      if (catRes.data.length > 0 && !newExercise.category_id) {
-        setNewExercise(prev => ({ ...prev, category_id: catRes.data[0].id }));
+      
+      const activeCats = catRes.data.filter(c => c.is_active);
+      if (activeCats.length > 0 && !newExercise.category_id) {
+        setNewExercise(prev => ({ ...prev, category_id: activeCats[0].id }));
       }
     } catch (err) {
       console.error('Error cargando ejercicios:', err);
@@ -56,6 +68,7 @@ export const ExercisesView = () => {
     fetchData();
   }, []);
 
+  // Manejo de Ejercicios
   const handleCreateExercise = async (e) => {
     e.preventDefault();
     setCreating(true);
@@ -63,25 +76,18 @@ export const ExercisesView = () => {
     try {
       await api.post('/exercises/', newExercise);
       setShowCreateModal(false);
-      setNewExercise({ name: '', category_id: categories[0]?.id || '', youtube_url: '', description: '' });
+      const activeCats = categories.filter(c => c.is_active);
+      setNewExercise({ 
+        name: '', 
+        category_id: activeCats[0]?.id || '', 
+        youtube_url: '', 
+        description: '' 
+      });
       fetchData();
     } catch (err) {
       setCreateError(err.response?.data?.detail || 'Error al crear el ejercicio.');
     } finally {
       setCreating(false);
-    }
-  };
-
-  const handleCreateCategory = async (e) => {
-    e.preventDefault();
-    try {
-      await api.post('/categories/', { name: newCategoryName, description: newCategoryDesc });
-      setShowCategoryModal(false);
-      setNewCategoryName('');
-      setNewCategoryDesc('');
-      fetchData();
-    } catch (err) {
-      alert(err.response?.data?.detail || 'Error al crear la categoría.');
     }
   };
 
@@ -94,6 +100,96 @@ export const ExercisesView = () => {
       } catch (err) {
         alert('Error al eliminar el ejercicio');
       }
+    }
+  };
+
+  // Manejo de Categorías
+  const handleOpenNewCategory = () => {
+    setEditingCategory(null);
+    setCategoryForm({
+      name: '',
+      description: '',
+      is_active: true
+    });
+    setCategoryMsg({ type: '', text: '' });
+    setCategoryFormOpen(true);
+  };
+
+  const handleEditCategory = (cat) => {
+    setEditingCategory(cat);
+    setCategoryForm({
+      name: cat.name,
+      description: cat.description || '',
+      is_active: cat.is_active
+    });
+    setCategoryMsg({ type: '', text: '' });
+    setCategoryFormOpen(true);
+  };
+
+  const handleSaveCategory = async (e) => {
+    e.preventDefault();
+    setSavingCategory(true);
+    setCategoryMsg({ type: '', text: '' });
+
+    const cleanName = categoryForm.name.trim();
+    if (!cleanName) {
+      setCategoryMsg({ type: 'error', text: 'El nombre de la categoría es obligatorio.' });
+      setSavingCategory(false);
+      return;
+    }
+
+    try {
+      if (editingCategory) {
+        // Actualizar categoría existente
+        const res = await api.put(`/categories/${editingCategory.id}`, {
+          name: cleanName,
+          description: categoryForm.description.trim() || null,
+          is_active: categoryForm.is_active
+        });
+        setCategories(prev => prev.map(c => c.id === editingCategory.id ? res.data : c));
+        setCategoryMsg({ type: 'success', text: `Categoría "${res.data.name}" actualizada con éxito.` });
+      } else {
+        // Crear nueva categoría
+        const res = await api.post('/categories/', {
+          name: cleanName,
+          description: categoryForm.description.trim() || null,
+          is_active: categoryForm.is_active
+        });
+        setCategories(prev => [...prev, res.data].sort((a, b) => a.name.localeCompare(b.name)));
+        setCategoryMsg({ type: 'success', text: `Categoría "${res.data.name}" creada con éxito.` });
+      }
+
+      setCategoryFormOpen(false);
+      setEditingCategory(null);
+      // Refrescar también ejercicios para asegurar nombres de categoría sincronizados
+      const exRes = await api.get('/exercises/');
+      setExercises(exRes.data);
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setCategoryMsg({ 
+        type: 'error', 
+        text: typeof detail === 'string' ? detail : 'Error al guardar la categoría.' 
+      });
+    } finally {
+      setSavingCategory(false);
+    }
+  };
+
+  const handleToggleCategoryStatus = async (cat, e) => {
+    e.stopPropagation();
+    try {
+      const res = await api.patch(`/categories/${cat.id}/toggle-status`);
+      setCategories(prev => prev.map(c => c.id === cat.id ? res.data : c));
+      
+      // Si la categoría desactivada era la seleccionada en el formulario de nuevo ejercicio, cambiarla
+      if (!res.data.is_active && newExercise.category_id === cat.id) {
+        const remainingActive = categories.filter(c => c.id !== cat.id && c.is_active);
+        if (remainingActive.length > 0) {
+          setNewExercise(prev => ({ ...prev, category_id: remainingActive[0].id }));
+        }
+      }
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Error al alternar el estado de la categoría.');
     }
   };
 
@@ -112,6 +208,11 @@ export const ExercisesView = () => {
     return match ? `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` : null;
   };
 
+  // Contar ejercicios por categoría
+  const getExerciseCountByCategory = (catId) => {
+    return exercises.filter(e => e.category_id === catId).length;
+  };
+
   return (
     <div className="view-container">
       {/* Header & Actions */}
@@ -126,9 +227,14 @@ export const ExercisesView = () => {
         </div>
 
         {isCoachOrAdmin && (
-          <div className="view-actions">
+          <div className="view-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button
-              onClick={() => setShowCategoryModal(true)}
+              onClick={() => {
+                setShowCategoryManagerModal(true);
+                setCategoryFormOpen(false);
+                setEditingCategory(null);
+                setCategoryMsg({ type: '', text: '' });
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -140,11 +246,14 @@ export const ExercisesView = () => {
                 border: '1px solid var(--md-sys-color-outline-variant)',
                 cursor: 'pointer',
                 fontWeight: 600,
-                fontSize: '14px'
+                fontSize: '14px',
+                transition: 'all 0.2s'
               }}
+              onMouseOver={(e) => e.currentTarget.style.borderColor = 'rgba(110, 136, 66, 0.5)'}
+              onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--md-sys-color-outline-variant)'}
             >
-              <Plus size={16} />
-              Nueva Categoría
+              <FolderCog size={17} color="#DEEAC1" />
+              Gestionar Categorías
             </button>
 
             <button
@@ -223,30 +332,47 @@ export const ExercisesView = () => {
               fontSize: '13px',
               fontWeight: 600,
               backgroundColor: selectedCategory === 'all' ? 'var(--md-sys-color-secondary)' : 'var(--md-sys-color-surface-variant)',
-              color: selectedCategory === 'all' ? '#FFF' : 'var(--md-sys-color-on-surface-variant)'
+              color: selectedCategory === 'all' ? '#FFF' : 'var(--md-sys-color-on-surface-variant)',
+              transition: 'all 0.2s'
             }}
           >
             Todas ({exercises.length})
           </button>
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '12px',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 600,
-                whiteSpace: 'nowrap',
-                backgroundColor: selectedCategory === cat.id ? 'var(--md-sys-color-secondary)' : 'var(--md-sys-color-surface-variant)',
-                color: selectedCategory === cat.id ? '#FFF' : 'var(--md-sys-color-on-surface-variant)'
-              }}
-            >
-              {cat.name}
-            </button>
-          ))}
+          {categories.map((cat) => {
+            const hasExercises = getExerciseCountByCategory(cat.id) > 0;
+            // Si la categoría está inactiva y no tiene ejercicios, la ocultamos en los filtros públicos
+            if (!cat.is_active && !hasExercises && !isCoachOrAdmin) return null;
+
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '12px',
+                  border: cat.is_active ? 'none' : '1px dashed rgba(255, 180, 171, 0.4)',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  backgroundColor: selectedCategory === cat.id ? 'var(--md-sys-color-secondary)' : 'var(--md-sys-color-surface-variant)',
+                  color: selectedCategory === cat.id ? '#FFF' : cat.is_active ? 'var(--md-sys-color-on-surface-variant)' : 'rgba(255, 180, 171, 0.8)',
+                  opacity: cat.is_active ? 1 : 0.75,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {cat.name}
+                {!cat.is_active && (
+                  <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--md-sys-color-error)' }}>
+                    (Deshabilitada)
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -277,6 +403,9 @@ export const ExercisesView = () => {
         }}>
           {filteredExercises.map((exercise) => {
             const thumbUrl = getYouTubeThumbnail(exercise.youtube_url);
+            const categoryObj = categories.find(c => c.id === exercise.category_id);
+            const isCatActive = categoryObj ? categoryObj.is_active : true;
+
             return (
               <div
                 key={exercise.id}
@@ -354,16 +483,17 @@ export const ExercisesView = () => {
                     position: 'absolute',
                     top: '12px',
                     left: '12px',
-                    backgroundColor: 'rgba(20, 26, 20, 0.85)',
+                    backgroundColor: isCatActive ? 'rgba(20, 26, 20, 0.85)' : 'rgba(40, 20, 20, 0.9)',
                     backdropFilter: 'blur(8px)',
-                    color: 'var(--md-sys-color-secondary)',
+                    color: isCatActive ? 'var(--md-sys-color-secondary)' : '#FFB4AB',
                     fontSize: '11px',
                     fontWeight: 700,
                     padding: '4px 10px',
                     borderRadius: '8px',
-                    border: '1px solid var(--md-sys-color-outline-variant)'
+                    border: isCatActive ? '1px solid var(--md-sys-color-outline-variant)' : '1px solid rgba(255, 180, 171, 0.4)'
                   }}>
                     {exercise.category?.name || 'General'}
+                    {!isCatActive && ' (Archivada)'}
                   </span>
                 </div>
 
@@ -434,17 +564,20 @@ export const ExercisesView = () => {
 
             <form onSubmit={handleCreateExercise} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={labelStyle}>Categoría</label>
+                <label style={labelStyle}>Categoría Muscular *</label>
                 <select
                   value={newExercise.category_id}
                   onChange={(e) => setNewExercise({ ...newExercise, category_id: e.target.value })}
                   style={inputStyle}
                   required
                 >
-                  {categories.map((c) => (
+                  {categories.filter(c => c.is_active).map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
+                <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '4px', display: 'block' }}>
+                  Solo se listan las categorías activas en el sistema.
+                </span>
               </div>
 
               <div>
@@ -521,69 +654,369 @@ export const ExercisesView = () => {
         </div>
       )}
 
-      {/* Modal: Create Category */}
-      {showCategoryModal && (
-        <div style={modalBackdropStyle} onClick={() => setShowCategoryModal(false)}>
-          <div className="responsive-modal-box" style={{ ...modalBoxStyle, width: '100%', maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#FFF', marginBottom: '16px' }}>
-              Nueva Categoría de Ejercicios
-            </h2>
-
-            <form onSubmit={handleCreateCategory} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <label style={labelStyle}>Nombre de la Categoría *</label>
-                <input
-                  type="text"
-                  placeholder="Ej: Glúteos y Cadera"
-                  required
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  style={inputStyle}
-                />
+      {/* Modal: GESTIÓN INTEGRAL DE CATEGORÍAS (Crear, Editar, Habilitar/Deshabilitar) */}
+      {showCategoryManagerModal && (
+        <div style={modalBackdropStyle} onClick={() => setShowCategoryManagerModal(false)}>
+          <div 
+            className="responsive-modal-box" 
+            style={{ 
+              ...modalBoxStyle, 
+              width: '100%', 
+              maxWidth: '680px',
+              maxHeight: '90vh',
+              overflowY: 'auto'
+            }} 
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header del Modal */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(110, 136, 66, 0.2)',
+                  border: '1px solid rgba(137, 168, 84, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <FolderCog size={20} color="#DEEAC1" />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: '19px', fontWeight: 800, color: '#FFF' }}>
+                    Gestión de Categorías Musculares
+                  </h2>
+                  <p style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '2px' }}>
+                    Crea, edita y habilita o deshabilita categorías sin romper ejercicios existentes
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <label style={labelStyle}>Descripción</label>
-                <textarea
-                  rows="3"
-                  placeholder="Grupos musculares involucrados..."
-                  value={newCategoryDesc}
-                  onChange={(e) => setNewCategoryDesc(e.target.value)}
-                  style={{ ...inputStyle, resize: 'none' }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '12px' }}>
+              {!categoryFormOpen && (
                 <button
-                  type="button"
-                  onClick={() => setShowCategoryModal(false)}
+                  onClick={handleOpenNewCategory}
                   style={{
-                    padding: '10px 18px',
-                    borderRadius: '12px',
-                    backgroundColor: 'transparent',
-                    border: '1px solid var(--md-sys-color-outline-variant)',
-                    color: 'var(--md-sys-color-on-surface-variant)',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 14px',
+                    borderRadius: '10px',
                     backgroundColor: 'var(--md-sys-color-primary)',
                     color: '#FFF',
                     border: 'none',
                     fontWeight: 700,
-                    cursor: 'pointer'
+                    fontSize: '12.5px',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(110, 136, 66, 0.4)'
                   }}
                 >
-                  Crear Categoría
+                  <Plus size={15} />
+                  Nueva Categoría
                 </button>
+              )}
+            </div>
+
+            {/* Mensajes de Alerta/Éxito */}
+            {categoryMsg.text && (
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: '10px',
+                marginBottom: '14px',
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                backgroundColor: categoryMsg.type === 'error' ? 'rgba(255, 180, 171, 0.15)' : 'rgba(110, 136, 66, 0.2)',
+                border: categoryMsg.type === 'error' ? '1px solid rgba(255, 180, 171, 0.3)' : '1px solid rgba(137, 168, 84, 0.4)',
+                color: categoryMsg.type === 'error' ? 'var(--md-sys-color-error)' : '#DEEAC1'
+              }}>
+                {categoryMsg.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
+                <span>{categoryMsg.text}</span>
               </div>
-            </form>
+            )}
+
+            {/* Formulario de Creación / Edición */}
+            {categoryFormOpen && (
+              <form 
+                onSubmit={handleSaveCategory}
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid rgba(110, 136, 66, 0.3)',
+                  borderRadius: '16px',
+                  padding: '16px 18px',
+                  marginBottom: '20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#DEEAC1' }}>
+                    {editingCategory ? `Editar Categoría: "${editingCategory.name}"` : 'Crear Nueva Categoría'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCategoryFormOpen(false);
+                      setEditingCategory(null);
+                    }}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--md-sys-color-on-surface-variant)',
+                      cursor: 'pointer',
+                      padding: '4px'
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Nombre de la Categoría *</label>
+                  <input
+                    type="text"
+                    placeholder="Ej: Glúteos y Cadera"
+                    required
+                    value={categoryForm.name}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Descripción / Músculos Principales</label>
+                  <textarea
+                    rows="2"
+                    placeholder="Ej: Músculos extensores y abductores de cadera..."
+                    value={categoryForm.description}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                    style={{ ...inputStyle, resize: 'none' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '2px' }}>
+                  <input
+                    type="checkbox"
+                    id="cat_is_active"
+                    checked={categoryForm.is_active}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, is_active: e.target.checked })}
+                    style={{ width: '17px', height: '17px', accentColor: '#89A854', cursor: 'pointer' }}
+                  />
+                  <label htmlFor="cat_is_active" style={{ fontSize: '13px', color: '#FFF', cursor: 'pointer' }}>
+                    Categoría Activa (Visible al prescribir y crear nuevos ejercicios)
+                  </label>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCategoryFormOpen(false);
+                      setEditingCategory(null);
+                    }}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '10px',
+                      backgroundColor: 'transparent',
+                      border: '1px solid var(--md-sys-color-outline-variant)',
+                      color: 'var(--md-sys-color-on-surface-variant)',
+                      cursor: 'pointer',
+                      fontSize: '13px'
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingCategory}
+                    style={{
+                      padding: '8px 18px',
+                      borderRadius: '10px',
+                      backgroundColor: 'var(--md-sys-color-primary)',
+                      color: '#FFF',
+                      border: 'none',
+                      fontWeight: 700,
+                      cursor: savingCategory ? 'not-allowed' : 'pointer',
+                      fontSize: '13px'
+                    }}
+                  >
+                    {savingCategory ? 'Guardando...' : editingCategory ? 'Actualizar Categoría' : 'Guardar Categoría'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Listado de Categorías Existentes */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--md-sys-color-on-surface-variant)' }}>
+                  Categorías en el Sistema ({categories.length})
+                </span>
+                <span style={{ fontSize: '11.5px', color: 'var(--md-sys-color-tertiary)' }}>
+                  {categories.filter(c => c.is_active).length} activas · {categories.filter(c => !c.is_active).length} deshabilitadas
+                </span>
+              </div>
+
+              {categories.map((cat) => {
+                const exCount = getExerciseCountByCategory(cat.id);
+                const isEditingThis = editingCategory?.id === cat.id;
+
+                return (
+                  <div
+                    key={cat.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 16px',
+                      borderRadius: '14px',
+                      backgroundColor: isEditingThis 
+                        ? 'rgba(110, 136, 66, 0.15)' 
+                        : cat.is_active ? 'var(--md-sys-color-surface-variant)' : 'rgba(25, 20, 20, 0.6)',
+                      border: isEditingThis 
+                        ? '1px solid rgba(137, 168, 84, 0.6)' 
+                        : cat.is_active ? '1px solid var(--md-sys-color-outline-variant)' : '1px dashed rgba(255, 180, 171, 0.3)',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {/* Información de la Categoría */}
+                    <div style={{ flex: 1, marginRight: '14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ 
+                          fontSize: '14.5px', 
+                          fontWeight: 700, 
+                          color: cat.is_active ? '#FFF' : 'rgba(255, 255, 255, 0.6)' 
+                        }}>
+                          {cat.name}
+                        </span>
+                        
+                        {/* Badge de Estado */}
+                        <span style={{
+                          fontSize: '10px',
+                          fontWeight: 800,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em',
+                          padding: '2px 7px',
+                          borderRadius: '6px',
+                          backgroundColor: cat.is_active ? 'rgba(110, 136, 66, 0.25)' : 'rgba(255, 180, 171, 0.15)',
+                          border: cat.is_active ? '1px solid rgba(137, 168, 84, 0.4)' : '1px solid rgba(255, 180, 171, 0.3)',
+                          color: cat.is_active ? '#DEEAC1' : 'var(--md-sys-color-error)'
+                        }}>
+                          {cat.is_active ? 'Activa' : 'Deshabilitada'}
+                        </span>
+
+                        {/* Contador de ejercicios vinculados */}
+                        <span style={{
+                          fontSize: '11px',
+                          color: 'var(--md-sys-color-tertiary)',
+                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                          padding: '2px 6px',
+                          borderRadius: '6px'
+                        }}>
+                          {exCount} ej.
+                        </span>
+                      </div>
+
+                      {cat.description && (
+                        <p style={{ 
+                          fontSize: '12px', 
+                          color: cat.is_active ? 'var(--md-sys-color-on-surface-variant)' : 'rgba(255, 255, 255, 0.4)', 
+                          marginTop: '3px',
+                          lineHeight: 1.4
+                        }}>
+                          {cat.description}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Acciones de la Categoría */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {/* Botón Editar */}
+                      <button
+                        onClick={() => handleEditCategory(cat)}
+                        title="Editar nombre y descripción"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                          border: '1px solid var(--md-sys-color-outline-variant)',
+                          color: 'var(--md-sys-color-on-surface)',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.backgroundColor = 'rgba(110, 136, 66, 0.25)';
+                          e.currentTarget.style.color = '#DEEAC1';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.06)';
+                          e.currentTarget.style.color = 'var(--md-sys-color-on-surface)';
+                        }}
+                      >
+                        <Pencil size={13} />
+                        Editar
+                      </button>
+
+                      {/* Botón Alternar Estado (Habilitar / Deshabilitar) */}
+                      <button
+                        onClick={(e) => handleToggleCategoryStatus(cat, e)}
+                        title={cat.is_active ? "Deshabilitar categoría (no afectará ejercicios históricos)" : "Habilitar categoría"}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          backgroundColor: cat.is_active ? 'rgba(255, 180, 171, 0.12)' : 'rgba(110, 136, 66, 0.2)',
+                          border: cat.is_active ? '1px solid rgba(255, 180, 171, 0.25)' : '1px solid rgba(137, 168, 84, 0.4)',
+                          color: cat.is_active ? 'var(--md-sys-color-error)' : '#DEEAC1',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.opacity = '0.85';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.opacity = '1';
+                        }}
+                      >
+                        <Power size={13} />
+                        {cat.is_active ? 'Deshabilitar' : 'Habilitar'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Footer del Modal */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
+              <button
+                type="button"
+                onClick={() => setShowCategoryManagerModal(false)}
+                style={{
+                  padding: '10px 22px',
+                  borderRadius: '12px',
+                  backgroundColor: 'var(--md-sys-color-surface-variant)',
+                  border: '1px solid var(--md-sys-color-outline-variant)',
+                  color: '#FFF',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 600
+                }}
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}

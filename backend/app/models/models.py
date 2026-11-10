@@ -117,8 +117,9 @@ class Category(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(100), unique=True, nullable=False)
     description = Column(Text, nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
 
-    exercises = relationship("Exercise", back_populates="category", cascade="all, delete-orphan")
+    exercises = relationship("Exercise", back_populates="category")
 
 class Exercise(Base):
     __tablename__ = "exercises"

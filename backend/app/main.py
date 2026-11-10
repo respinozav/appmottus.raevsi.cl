@@ -33,10 +33,15 @@ app.include_router(analytics.router, prefix=f"{settings.API_V1_STR}/analytics", 
 @app.get(f"{settings.API_V1_STR}/manual/download")
 def download_manual():
     possible_paths = [
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../manual_usuario_appmottus_completo.docx")),
         os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../manual_usuario_appmottus.docx")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "../../manual_usuario_appmottus_completo.docx")),
         os.path.abspath(os.path.join(os.path.dirname(__file__), "../../manual_usuario_appmottus.docx")),
+        "/var/www/appmottus.raevsi.cl/manual_usuario_appmottus_completo.docx",
         "/var/www/appmottus.raevsi.cl/manual_usuario_appmottus.docx",
+        "/var/www/html/appmottus.raevsi.cl/manual_usuario_appmottus_completo.docx",
         "/var/www/html/appmottus.raevsi.cl/manual_usuario_appmottus.docx",
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../frontend/public/manual_usuario_appmottus_completo.docx")),
         os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../frontend/public/manual_usuario_appmottus.docx")),
     ]
     for p in possible_paths:

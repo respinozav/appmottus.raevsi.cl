@@ -56,8 +56,10 @@ CREATE TABLE IF NOT EXISTS bdmottus.users (
 CREATE TABLE IF NOT EXISTS bdmottus.categories (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL UNIQUE,
-    description TEXT
+    description TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
 );
+ALTER TABLE bdmottus.categories ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
 
 -- Tabla de Ejercicios
 CREATE TABLE IF NOT EXISTS bdmottus.exercises (

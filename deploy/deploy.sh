@@ -283,6 +283,11 @@ EOF
         python migrate_truecoach_profile.py || echo "Aviso: migración TrueCoach Perfil omitida o ya aplicada"
     fi
 
+    if [ -f "migrate_categories_update.py" ]; then
+        echo "Ejecutando migración de esquema Categorías (is_active)..."
+        python migrate_categories_update.py || echo "Aviso: migración Categorías omitida o ya aplicada"
+    fi
+
     ########################################
     # SEED USERS & PASSWORDS
     ########################################

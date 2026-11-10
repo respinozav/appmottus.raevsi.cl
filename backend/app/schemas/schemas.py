@@ -139,12 +139,23 @@ class Token(BaseModel):
 class CategoryBase(BaseModel):
     name: str
     description: Optional[str] = None
+    is_active: bool = True
 
-class CategoryCreate(CategoryBase):
-    pass
+class CategoryCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    is_active: Optional[bool] = True
 
-class CategoryOut(CategoryBase):
+class CategoryUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class CategoryOut(BaseModel):
     id: UUID
+    name: str
+    description: Optional[str] = None
+    is_active: bool
 
     class Config:
         from_attributes = True
