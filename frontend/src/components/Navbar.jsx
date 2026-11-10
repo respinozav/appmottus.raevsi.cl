@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dumbbell, UserCheck, CalendarCheck, LogOut, TrendingUp, BarChart3, User as UserIcon, Lock, KeyRound, Check, X, AlertCircle, MessageSquare } from 'lucide-react';
+import { Dumbbell, UserCheck, CalendarCheck, LogOut, TrendingUp, BarChart3, User as UserIcon, Lock, KeyRound, Check, X, AlertCircle, MessageSquare, BookOpen, FileDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { DirectMessagesModal } from './DirectMessagesModal';
@@ -281,6 +281,37 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
               </span>
             )}
           </button>
+
+          {/* Botón Descargar Manual de Usuario (.docx) */}
+          <a
+            href="/manual_usuario_appmottus.docx"
+            download="manual_usuario_appmottus.docx"
+            title="Descargar Manual de Usuario Oficial (.docx)"
+            aria-label="Descargar Manual de Usuario Oficial"
+            style={{
+              background: 'var(--md-sys-color-surface-variant)',
+              border: '1px solid var(--md-sys-color-outline-variant)',
+              color: 'var(--md-sys-color-on-surface-variant)',
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s',
+              textDecoration: 'none'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(110, 136, 66, 0.25)';
+              e.currentTarget.style.color = '#DEEAC1';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--md-sys-color-surface-variant)';
+              e.currentTarget.style.color = 'var(--md-sys-color-on-surface-variant)';
+            }}
+          >
+            <BookOpen size={17} />
+          </a>
 
           <button
             onClick={openProfileModal}
@@ -737,6 +768,45 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
                     autoComplete="new-password"
                   />
                 </div>
+              </div>
+
+              {/* Descarga de Manual de Usuario en Modal de Perfil */}
+              <div style={{
+                marginTop: '14px',
+                padding: '12px 14px',
+                borderRadius: '10px',
+                backgroundColor: 'rgba(110, 136, 66, 0.1)',
+                border: '1px solid rgba(137, 168, 84, 0.25)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <BookOpen size={20} color="#DEEAC1" />
+                  <div>
+                    <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#DEEAC1' }}>Manual de Usuario Oficial</div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)' }}>Guía completa en formato Word (.docx)</div>
+                  </div>
+                </div>
+                <a
+                  href="/manual_usuario_appmottus.docx"
+                  download="manual_usuario_appmottus.docx"
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: '#6E8842',
+                    color: '#FFF',
+                    fontSize: '11.5px',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                >
+                  <FileDown size={14} /> Descargar
+                </a>
               </div>
 
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '12px' }}>

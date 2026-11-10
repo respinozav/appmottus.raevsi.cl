@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+import os
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1 import auth, users, categories, exercises, routines, metrics, analytics
@@ -27,6 +29,24 @@ app.include_router(exercises.router, prefix=f"{settings.API_V1_STR}/exercises", 
 app.include_router(routines.router, prefix=f"{settings.API_V1_STR}/routines", tags=["Rutinas"])
 app.include_router(metrics.router, prefix=f"{settings.API_V1_STR}/metrics", tags=["Métricas Corporales"])
 app.include_router(analytics.router, prefix=f"{settings.API_V1_STR}/analytics", tags=["Analítica & Cumplimiento"])
+
+@app.get(f"{settings.API_V1_STR}/manual/download")
+def download_manual():
+    possible_paths = [
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../manual_usuario_appmottus.docx")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "../../manual_usuario_appmottus.docx")),
+        "/var/www/appmottus.raevsi.cl/manual_usuario_appmottus.docx",
+        "/var/www/html/appmottus.raevsi.cl/manual_usuario_appmottus.docx",
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../frontend/public/manual_usuario_appmottus.docx")),
+    ]
+    for p in possible_paths:
+        if os.path.exists(p):
+            return FileResponse(
+                path=p,
+                filename="manual_usuario_appmottus.docx",
+                media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            )
+    raise HTTPException(status_code=404, detail="Manual de usuario no encontrado en el servidor.")
 
 @app.get("/")
 @app.get("/api")
