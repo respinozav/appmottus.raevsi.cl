@@ -1382,7 +1382,7 @@ export const ProgressView = () => {
                   <div className="md-card" style={{ padding: '18px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <span style={{ fontSize: '12px', color: 'var(--md-sys-color-tertiary)', fontWeight: 600 }}>Δ PESO CORPORAL</span>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                      <span style={{ fontSize: '24px', fontWeight: 800, color: '#FFF' }}>
+                      <span className="kpi-delta-val" style={{ fontSize: '24px', fontWeight: 800, color: '#FFF' }}>
                         {metricA.weight}kg → {metricB.weight}kg
                       </span>
                     </div>
@@ -1396,7 +1396,7 @@ export const ProgressView = () => {
                   <div className="md-card" style={{ padding: '18px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <span style={{ fontSize: '12px', color: 'var(--md-sys-color-tertiary)', fontWeight: 600 }}>Δ GRASA CORPORAL</span>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                      <span style={{ fontSize: '24px', fontWeight: 800, color: '#FFF' }}>
+                      <span className="kpi-delta-val" style={{ fontSize: '24px', fontWeight: 800, color: '#FFF' }}>
                         {metricA.body_fat_percentage ? `${metricA.body_fat_percentage}%` : '--'} → {metricB.body_fat_percentage ? `${metricB.body_fat_percentage}%` : '--'}
                       </span>
                     </div>
@@ -1410,7 +1410,7 @@ export const ProgressView = () => {
                   <div className="md-card" style={{ padding: '18px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <span style={{ fontSize: '12px', color: 'var(--md-sys-color-tertiary)', fontWeight: 600 }}>Δ CINTURA</span>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                      <span style={{ fontSize: '24px', fontWeight: 800, color: '#FFF' }}>
+                      <span className="kpi-delta-val" style={{ fontSize: '24px', fontWeight: 800, color: '#FFF' }}>
                         {metricA.waist_cm ? `${metricA.waist_cm}cm` : '--'} → {metricB.waist_cm ? `${metricB.waist_cm}cm` : '--'}
                       </span>
                     </div>
@@ -1424,7 +1424,7 @@ export const ProgressView = () => {
                   <div className="md-card" style={{ padding: '18px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <span style={{ fontSize: '12px', color: 'var(--md-sys-color-tertiary)', fontWeight: 600 }}>Δ CADERA</span>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                      <span style={{ fontSize: '24px', fontWeight: 800, color: '#FFF' }}>
+                      <span className="kpi-delta-val" style={{ fontSize: '24px', fontWeight: 800, color: '#FFF' }}>
                         {metricA.hip_cm ? `${metricA.hip_cm}cm` : '--'} → {metricB.hip_cm ? `${metricB.hip_cm}cm` : '--'}
                       </span>
                     </div>

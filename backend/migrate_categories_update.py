@@ -75,3 +75,4 @@ for r in rows:
 cur.close()
 conn.close()
 print("--- MIGRACIÓN CATEGORÍAS COMPLETADA EXITOSAMENTE AL 100% ---")
+

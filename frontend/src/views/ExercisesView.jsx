@@ -866,6 +866,7 @@ export const ExercisesView = () => {
                 return (
                   <div
                     key={cat.id}
+                    className="category-item-card"
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -882,8 +883,8 @@ export const ExercisesView = () => {
                     }}
                   >
                     {/* Información de la Categoría */}
-                    <div style={{ flex: 1, marginRight: '14px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ flex: 1, minWidth: 0, marginRight: '14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         <span style={{ 
                           fontSize: '14.5px', 
                           fontWeight: 700, 
@@ -932,7 +933,7 @@ export const ExercisesView = () => {
                     </div>
 
                     {/* Acciones de la Categoría */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="category-item-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                       {/* Botón Editar */}
                       <button
                         onClick={() => handleEditCategory(cat)}

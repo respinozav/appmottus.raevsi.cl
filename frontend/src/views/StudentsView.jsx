@@ -646,6 +646,7 @@ export const StudentsView = () => {
               {students.map((student) => (
                 <div
                   key={student.id}
+                  className="student-item-card"
                   style={{
                     display: 'flex',
                     flexWrap: 'wrap',
@@ -659,7 +660,7 @@ export const StudentsView = () => {
                   }}
                 >
                     <div style={{ flex: '1 1 200px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <div className="student-item-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '15px', fontWeight: 700, color: '#FFF' }}>
                         {student.name || 'Registro Pendiente'}
                       </span>
@@ -731,7 +732,7 @@ export const StudentsView = () => {
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <div className="student-item-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     {/* Botón Configurar Plan & Hábitos */}
                     <button
                       onClick={() => handleOpenCoachSettings(student)}

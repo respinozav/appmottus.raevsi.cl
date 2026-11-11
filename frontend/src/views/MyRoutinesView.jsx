@@ -800,16 +800,16 @@ export const MyRoutinesView = () => {
                       </div>
 
                       {/* Interactive Series Table (Set by Set) */}
-                      <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left', minWidth: '480px' }}>
+                      <div className="scroll-touch-container" style={{ overflowX: 'auto', width: '100%' }}>
+                        <table className="workout-logger-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
                           <thead>
                             <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', color: 'var(--md-sys-color-tertiary)' }}>
-                              <th style={{ padding: '8px', width: '50px' }}>Serie</th>
-                              <th style={{ padding: '8px' }}>Objetivo</th>
-                              <th style={{ padding: '8px', width: '110px' }}>Peso Real (kg)</th>
-                              <th style={{ padding: '8px', width: '100px' }}>Reps Logradas</th>
-                              <th style={{ padding: '8px', width: '85px' }}>RPE Real</th>
-                              <th style={{ padding: '8px', textAlign: 'center', width: '70px' }}>Hecho</th>
+                              <th style={{ padding: '8px 4px', width: '36px' }}>#</th>
+                              <th style={{ padding: '8px 4px' }}>Objetivo</th>
+                              <th style={{ padding: '8px 4px', minWidth: '72px' }}>Peso (kg)</th>
+                              <th style={{ padding: '8px 4px', minWidth: '65px' }}>Reps</th>
+                              <th style={{ padding: '8px 4px', minWidth: '55px' }}>RPE</th>
+                              <th style={{ padding: '8px 4px', textAlign: 'center', width: '48px' }}>Hecho</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1149,7 +1149,7 @@ export const MyRoutinesView = () => {
 
       {/* Floating Rest Timer Widget (TrueCoach Rest Timer) */}
       {restTimer.active && (
-        <div style={{
+        <div className="floating-rest-timer" style={{
           position: 'fixed',
           bottom: '24px',
           right: '24px',

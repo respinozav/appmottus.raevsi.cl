@@ -47,6 +47,12 @@
   box-sizing: border-box;
 }
 
+html, body {
+  overflow-x: hidden !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+}
+
 body {
   font-family: var(--font-family-sans);
   background-color: var(--md-sys-color-background);
@@ -57,6 +63,10 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+}
+
+.navbar-mobile-role-badge {
+  display: none;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -351,4 +361,97 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: 20px !important;
   }
 }
+
+/* Floating Rest Timer on mobile (above bottom nav) */
+@media (max-width: 768px) {
+  .floating-rest-timer {
+    bottom: calc(75px + env(safe-area-inset-bottom, 12px)) !important;
+    right: 10px !important;
+    left: 10px !important;
+    max-width: calc(100vw - 20px) !important;
+    padding: 10px 14px !important;
+  }
+}
+
+/* Navbar mobile adjustments */
+@media (max-width: 640px) {
+  .top-navbar {
+    padding: 8px 10px !important;
+  }
+  .navbar-brand-subtitle {
+    display: none !important;
+  }
+  .navbar-user-text-block {
+    display: none !important;
+  }
+  .navbar-mobile-role-badge {
+    display: inline-flex !important;
+  }
+  .navbar-manual-btn {
+    display: none !important;
+  }
+  .top-navbar-actions {
+    gap: 6px !important;
+  }
+}
+
+/* Workout Logger Table for smartphone screens */
+@media (max-width: 600px) {
+  .workout-logger-table {
+    min-width: 100% !important;
+    font-size: 12px !important;
+  }
+  .workout-logger-table th,
+  .workout-logger-table td {
+    padding: 6px 3px !important;
+  }
+  .workout-logger-table input[type="number"] {
+    padding: 5px 2px !important;
+    font-size: 13px !important;
+    min-height: 36px !important;
+    text-align: center !important;
+  }
+}
+
+/* Category item card on mobile */
+@media (max-width: 600px) {
+  .category-item-card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+  .category-item-actions {
+    width: 100% !important;
+    justify-content: flex-end !important;
+  }
+}
+
+/* Student card on mobile */
+@media (max-width: 640px) {
+  .student-item-card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+  .student-item-actions {
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+  .student-item-actions button {
+    flex: 1 1 calc(50% - 6px) !important;
+    justify-content: center !important;
+    padding: 8px 6px !important;
+    font-size: 11.5px !important;
+  }
+}
+
+/* KPI delta text on small screens */
+@media (max-width: 480px) {
+  .kpi-delta-val {
+    font-size: 15px !important;
+  }
+}
+
 

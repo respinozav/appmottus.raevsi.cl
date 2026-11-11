@@ -204,8 +204,8 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
         </nav>
 
         {/* User Info & Logout */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ textAlign: 'right' }}>
+        <div className="top-navbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="navbar-user-text-block" style={{ textAlign: 'right' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
               <span className="navbar-user-name" style={{ fontSize: '13.5px', fontWeight: 700, color: '#FFF' }}>
                 {user?.name || user?.rut}
@@ -229,6 +229,22 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
               RUT: {user?.rut}
             </span>
           </div>
+
+          {/* Badge de Rol compacto visible solo en Smartphone */}
+          <span className="navbar-mobile-role-badge" style={{
+            fontSize: '9.5px',
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+            backgroundColor: roleBadge.bg,
+            border: roleBadge.border,
+            color: roleBadge.text,
+            padding: '3px 6px',
+            borderRadius: '5px',
+            flexShrink: 0
+          }}>
+            {roleBadge.label}
+          </span>
 
           {/* Botón Chat Directo con Badge */}
           <button
@@ -282,8 +298,9 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
             )}
           </button>
 
-          {/* Botón Descargar Manual de Usuario (.docx) */}
+          {/* Botón Descargar Manual de Usuario (.docx) - Oculto en móvil para no desbordar barra */}
           <a
+            className="navbar-manual-btn"
             href="/manual_usuario_appmottus.docx"
             download="manual_usuario_appmottus.docx"
             title="Descargar Manual de Usuario Oficial (.docx)"

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Dumbbell, ShieldCheck, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
+import { Dumbbell, ShieldCheck, ArrowRight, AlertCircle, Sparkles, Clock, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const LoginView = () => {
-  const { login } = useAuth();
+  const { login, sessionExpiredMsg, clearSessionExpiredMsg } = useAuth();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -78,6 +78,46 @@ export const LoginView = () => {
             appmottus.raevsi.cl
           </span>
         </div>
+
+        {/* Aviso de Cierre de Sesión por Inactividad (30 min) */}
+        {sessionExpiredMsg && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '12px',
+            backgroundColor: 'rgba(234, 179, 8, 0.14)',
+            border: '1px solid rgba(234, 179, 8, 0.45)',
+            borderRadius: '14px',
+            padding: '14px 16px',
+            marginBottom: '20px',
+            color: '#FDE047',
+            fontSize: '13px',
+            lineHeight: 1.45,
+            boxShadow: '0 4px 16px rgba(234, 179, 8, 0.15)'
+          }}>
+            <Clock size={19} style={{ flexShrink: 0, marginTop: '2px', color: '#FACC15' }} />
+            <div style={{ flex: 1 }}>
+              <strong style={{ display: 'block', color: '#FEF08A', marginBottom: '2px', fontSize: '13.5px' }}>
+                Sesión cerrada por inactividad
+              </strong>
+              <span>{sessionExpiredMsg}</span>
+            </div>
+            <button
+              onClick={clearSessionExpiredMsg}
+              type="button"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#FEF08A',
+                cursor: 'pointer',
+                padding: '2px'
+              }}
+              title="Descartar aviso"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
 
         {/* Error Alert */}
         {error && (
