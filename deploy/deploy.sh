@@ -288,6 +288,11 @@ EOF
         python migrate_categories_update.py || echo "Aviso: migración Categorías omitida o ya aplicada"
     fi
 
+    if [ -f "migrate_exercise_gif_support.py" ]; then
+        echo "Ejecutando migración de soporte para GIFs animados de técnica en ejercicios (gif_url)..."
+        python migrate_exercise_gif_support.py || echo "Aviso: migración GIF support omitida o ya aplicada"
+    fi
+
     ########################################
     # SEED USERS & PASSWORDS
     ########################################

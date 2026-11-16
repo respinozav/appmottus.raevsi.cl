@@ -1,0 +1,405 @@
+{
+  "count": 60,
+  "exercises": [
+    {
+      "id": "chest-barbell-bench-press",
+      "name": "Press de banca plano con barra",
+      "bodyPart": "Pecho",
+      "muscle": "Pectoral mayor",
+      "equipment": "Barra",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/chest/barbell-bench-press.gif"
+    },
+    {
+      "id": "chest-incline-barbell-bench-press",
+      "name": "Press de banca inclinado con barra",
+      "bodyPart": "Pecho",
+      "muscle": "Pectoral superior (clavicular)",
+      "equipment": "Barra",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/chest/barbell-incline-bench-press.gif"
+    },
+    {
+      "id": "chest-dumbbell-bench-press",
+      "name": "Press plano con mancuernas",
+      "bodyPart": "Pecho",
+      "muscle": "Pectoral mayor",
+      "equipment": "Mancuernas",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/chest/dumbbell-bench-press.gif"
+    },
+    {
+      "id": "chest-incline-dumbbell-bench-press",
+      "name": "Press inclinado con mancuernas",
+      "bodyPart": "Pecho",
+      "muscle": "Pectoral superior",
+      "equipment": "Mancuernas",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/chest/dumbbell-incline-bench-press.gif"
+    },
+    {
+      "id": "chest-cable-crossover",
+      "name": "Cruces en polea alta (Crossover)",
+      "bodyPart": "Pecho",
+      "muscle": "Pectoral mayor / esternal",
+      "equipment": "Polea",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/chest/cable-middle-fly.gif"
+    },
+    {
+      "id": "chest-push-ups",
+      "name": "Flexiones de brazos (Push-ups)",
+      "bodyPart": "Pecho",
+      "muscle": "Pectoral / Tríceps",
+      "equipment": "Peso corporal",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/chest/push-up.gif"
+    },
+    {
+      "id": "chest-pec-deck-fly",
+      "name": "Aperturas en máquina (Pec Deck)",
+      "bodyPart": "Pecho",
+      "muscle": "Pectoral mayor",
+      "equipment": "Máquina",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/chest/lever-seated-fly.gif"
+    },
+    {
+      "id": "chest-dips",
+      "name": "Fondos en paralelas para pecho",
+      "bodyPart": "Pecho",
+      "muscle": "Pectoral inferior / Tríceps",
+      "equipment": "Paralelas",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/chest/chest-dip.gif"
+    },
+    {
+      "id": "back-barbell-deadlift",
+      "name": "Peso muerto convencional con barra",
+      "bodyPart": "Espalda",
+      "muscle": "Erectores espinales / Dorsales / Isquios",
+      "equipment": "Barra",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/back/barbell-deadlift.gif"
+    },
+    {
+      "id": "back-pull-ups",
+      "name": "Dominadas pronas (Pull-ups)",
+      "bodyPart": "Espalda",
+      "muscle": "Dorsal ancho",
+      "equipment": "Barra fija",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/back/pull-up.gif"
+    },
+    {
+      "id": "back-chin-ups",
+      "name": "Dominadas supinas (Chin-ups)",
+      "bodyPart": "Espalda",
+      "muscle": "Dorsal / Bíceps",
+      "equipment": "Barra fija",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/back/chin-up.gif"
+    },
+    {
+      "id": "back-lat-pulldown",
+      "name": "Jalón al pecho en polea (Lat Pulldown)",
+      "bodyPart": "Espalda",
+      "muscle": "Dorsal ancho",
+      "equipment": "Polea",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/back/cable-lat-pulldown.gif"
+    },
+    {
+      "id": "back-barbell-row",
+      "name": "Remo con barra inclinado",
+      "bodyPart": "Espalda",
+      "muscle": "Dorsal / Trapecios / Romboides",
+      "equipment": "Barra",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/back/barbell-bent-over-row.gif"
+    },
+    {
+      "id": "back-seated-cable-row",
+      "name": "Remo sentado en polea baja (Gironde)",
+      "bodyPart": "Espalda",
+      "muscle": "Dorsal / Romboides",
+      "equipment": "Polea",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/back/cable-seated-row.gif"
+    },
+    {
+      "id": "back-dumbbell-one-arm-row",
+      "name": "Remo unilateral con mancuerna",
+      "bodyPart": "Espalda",
+      "muscle": "Dorsal ancho",
+      "equipment": "Mancuerna",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/back/dumbbell-one-arm-row.gif"
+    },
+    {
+      "id": "back-t-bar-row",
+      "name": "Remo en barra T con soporte",
+      "bodyPart": "Espalda",
+      "muscle": "Dorsal / Espalda media",
+      "equipment": "Máquina / Barra T",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/back/lever-t-bar-row.gif"
+    },
+    {
+      "id": "legs-barbell-squat",
+      "name": "Sentadilla trasera con barra (Back Squat)",
+      "bodyPart": "Piernas",
+      "muscle": "Cuádriceps / Glúteos",
+      "equipment": "Barra",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/legs/barbell-full-squat.gif"
+    },
+    {
+      "id": "legs-barbell-front-squat",
+      "name": "Sentadilla frontal con barra (Front Squat)",
+      "bodyPart": "Piernas",
+      "muscle": "Cuádriceps / Core",
+      "equipment": "Barra",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/legs/barbell-front-squat.gif"
+    },
+    {
+      "id": "legs-leg-press-45",
+      "name": "Prensa inclinada de piernas 45°",
+      "bodyPart": "Piernas",
+      "muscle": "Cuádriceps / Glúteos",
+      "equipment": "Máquina",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/legs/sled-45-degrees-leg-press.gif"
+    },
+    {
+      "id": "legs-bulgarian-split-squat",
+      "name": "Sentadilla búlgara con mancuernas",
+      "bodyPart": "Piernas",
+      "muscle": "Cuádriceps / Glúteos",
+      "equipment": "Mancuernas",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/legs/dumbbell-bulgarian-split-squat.gif"
+    },
+    {
+      "id": "legs-leg-extension",
+      "name": "Extensión de cuádriceps en máquina",
+      "bodyPart": "Piernas",
+      "muscle": "Cuádriceps",
+      "equipment": "Máquina",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/legs/lever-leg-extension.gif"
+    },
+    {
+      "id": "legs-lying-leg-curl",
+      "name": "Curl femoral tumbado en máquina",
+      "bodyPart": "Piernas",
+      "muscle": "Isquiosurales (Femorales)",
+      "equipment": "Máquina",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/legs/lever-lying-leg-curl.gif"
+    },
+    {
+      "id": "legs-romanian-deadlift",
+      "name": "Peso muerto rumano con mancuernas",
+      "bodyPart": "Piernas",
+      "muscle": "Isquiosurales / Glúteos",
+      "equipment": "Mancuernas",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/legs/dumbbell-romanian-deadlift.gif"
+    },
+    {
+      "id": "legs-hip-thrust",
+      "name": "Empuje de cadera (Hip Thrust) con barra",
+      "bodyPart": "Piernas",
+      "muscle": "Glúteo mayor",
+      "equipment": "Barra",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/legs/barbell-hip-thrust.gif"
+    },
+    {
+      "id": "legs-hip-abduction-machine",
+      "name": "Abducción de cadera en máquina",
+      "bodyPart": "Piernas",
+      "muscle": "Glúteo medio y menor",
+      "equipment": "Máquina",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/legs/lever-seated-hip-abduction.gif"
+    },
+    {
+      "id": "legs-standing-calf-raise",
+      "name": "Elevación de talones de pie (Gemelos)",
+      "bodyPart": "Piernas",
+      "muscle": "Gastrocnemio (Gemelos)",
+      "equipment": "Máquina / Barra",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/legs/lever-standing-calf-raise.gif"
+    },
+    {
+      "id": "shoulders-overhead-barbell-press",
+      "name": "Press militar de pie con barra (OHP)",
+      "bodyPart": "Hombros",
+      "muscle": "Deltoides anterior y lateral",
+      "equipment": "Barra",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/shoulders/barbell-standing-military-press.gif"
+    },
+    {
+      "id": "shoulders-seated-dumbbell-press",
+      "name": "Press de hombros sentado con mancuernas",
+      "bodyPart": "Hombros",
+      "muscle": "Deltoides anterior y lateral",
+      "equipment": "Mancuernas",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/shoulders/dumbbell-seated-shoulder-press.gif"
+    },
+    {
+      "id": "shoulders-dumbbell-lateral-raise",
+      "name": "Elevaciones laterales con mancuernas",
+      "bodyPart": "Hombros",
+      "muscle": "Deltoides lateral",
+      "equipment": "Mancuernas",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/shoulders/dumbbell-lateral-raise.gif"
+    },
+    {
+      "id": "shoulders-cable-lateral-raise",
+      "name": "Elevación lateral en polea baja",
+      "bodyPart": "Hombros",
+      "muscle": "Deltoides lateral",
+      "equipment": "Polea",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/shoulders/cable-one-arm-lateral-raise.gif"
+    },
+    {
+      "id": "shoulders-face-pull",
+      "name": "Face Pull con cuerda en polea alta",
+      "bodyPart": "Hombros",
+      "muscle": "Deltoides posterior / Rotadores",
+      "equipment": "Polea",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/shoulders/cable-rear-delt-row-stirrups.gif"
+    },
+    {
+      "id": "shoulders-rear-delt-fly",
+      "name": "Pájaros con mancuernas (Posterior)",
+      "bodyPart": "Hombros",
+      "muscle": "Deltoides posterior",
+      "equipment": "Mancuernas",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/shoulders/dumbbell-rear-lateral-raise.gif"
+    },
+    {
+      "id": "shoulders-barbell-shrug",
+      "name": "Encogimientos de hombros con barra (Trapecios)",
+      "bodyPart": "Hombros",
+      "muscle": "Trapecio superior",
+      "equipment": "Barra",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/shoulders/barbell-shrug.gif"
+    },
+    {
+      "id": "arms-barbell-curl",
+      "name": "Curl de bíceps con barra recta",
+      "bodyPart": "Brazos",
+      "muscle": "Bíceps braquial",
+      "equipment": "Barra",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/biceps/barbell-curl.gif"
+    },
+    {
+      "id": "arms-dumbbell-incline-curl",
+      "name": "Curl de bíceps en banco inclinado",
+      "bodyPart": "Brazos",
+      "muscle": "Bíceps (cabeza larga)",
+      "equipment": "Mancuernas",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/biceps/dumbbell-incline-biceps-curl.gif"
+    },
+    {
+      "id": "arms-dumbbell-hammer-curl",
+      "name": "Curl martillo con mancuernas",
+      "bodyPart": "Brazos",
+      "muscle": "Braquial / Braquiorradial",
+      "equipment": "Mancuernas",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/biceps/dumbbell-hammer-curl.gif"
+    },
+    {
+      "id": "arms-preacher-curl",
+      "name": "Curl en banco Scott (Predicador) con barra Z",
+      "bodyPart": "Brazos",
+      "muscle": "Bíceps braquial",
+      "equipment": "Barra Z / Banco Scott",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/biceps/ez-barbell-preacher-curl.gif"
+    },
+    {
+      "id": "arms-cable-biceps-curl",
+      "name": "Curl de bíceps en polea baja con barra",
+      "bodyPart": "Brazos",
+      "muscle": "Bíceps braquial",
+      "equipment": "Polea",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/biceps/cable-biceps-curl.gif"
+    },
+    {
+      "id": "arms-triceps-rope-pushdown",
+      "name": "Extensión de tríceps en polea con cuerda",
+      "bodyPart": "Brazos",
+      "muscle": "Tríceps (cabeza lateral/medial)",
+      "equipment": "Polea",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/triceps/cable-pushdown.gif"
+    },
+    {
+      "id": "arms-skull-crusher",
+      "name": "Press francés (Skull Crusher) con barra Z",
+      "bodyPart": "Brazos",
+      "muscle": "Tríceps (cabeza larga)",
+      "equipment": "Barra Z",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/triceps/ez-barbell-lying-triceps-extension.gif"
+    },
+    {
+      "id": "arms-overhead-cable-triceps-extension",
+      "name": "Extensión de tríceps sobre la cabeza en polea",
+      "bodyPart": "Brazos",
+      "muscle": "Tríceps (cabeza larga)",
+      "equipment": "Polea",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/triceps/cable-rope-overhead-triceps-extension.gif"
+    },
+    {
+      "id": "arms-close-grip-bench-press",
+      "name": "Press de banca con agarre cerrado para tríceps",
+      "bodyPart": "Brazos",
+      "muscle": "Tríceps / Pectoral",
+      "equipment": "Barra",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/triceps/barbell-close-grip-bench-press.gif"
+    },
+    {
+      "id": "core-cable-kneeling-crunch",
+      "name": "Crunch abdominal arrodillado en polea",
+      "bodyPart": "Core",
+      "muscle": "Recto abdominal",
+      "equipment": "Polea",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/core/cable-kneeling-crunch.gif"
+    },
+    {
+      "id": "core-hanging-leg-raise",
+      "name": "Elevación de piernas colgado en barra",
+      "bodyPart": "Core",
+      "muscle": "Abdominales inferiores / Flexores cadera",
+      "equipment": "Barra fija",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/core/hanging-leg-raise.gif"
+    },
+    {
+      "id": "core-plank",
+      "name": "Plancha isométrica frontal (Plank)",
+      "bodyPart": "Core",
+      "muscle": "Transverso abdominal / Estabilizadores",
+      "equipment": "Peso corporal",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/core/front-plank.gif"
+    },
+    {
+      "id": "core-ab-roller-wheel",
+      "name": "Rueda abdominal (Ab Roller)",
+      "bodyPart": "Core",
+      "muscle": "Recto abdominal / Core anterior",
+      "equipment": "Rueda abdominal",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/core/wheel-rollerout.gif"
+    },
+    {
+      "id": "core-russian-twist",
+      "name": "Giros rusos (Russian Twist) con disco",
+      "bodyPart": "Core",
+      "muscle": "Oblicuos",
+      "equipment": "Disco / Peso corporal",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/core/russian-twist.gif"
+    },
+    {
+      "id": "cardio-burpees",
+      "name": "Burpees completos con salto",
+      "bodyPart": "Cardio",
+      "muscle": "Cuerpo completo",
+      "equipment": "Peso corporal",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/cardio/burpee.gif"
+    },
+    {
+      "id": "cardio-jump-rope",
+      "name": "Salto de cuerda (Jump Rope)",
+      "bodyPart": "Cardio",
+      "muscle": "Gemelos / Acondicionamiento",
+      "equipment": "Cuerda",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/cardio/rope-jumping.gif"
+    },
+    {
+      "id": "cardio-mountain-climbers",
+      "name": "Escaladores (Mountain Climbers)",
+      "bodyPart": "Cardio",
+      "muscle": "Core / Cardio",
+      "equipment": "Peso corporal",
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/cardio/mountain-climber.gif"
+    }
+  ]
+}

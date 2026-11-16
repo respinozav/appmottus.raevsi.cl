@@ -22,7 +22,8 @@ import {
   RotateCcw,
   Sparkles,
   Flame,
-  X
+  X,
+  Film
 } from 'lucide-react';
 import api from '../services/api';
 import { VideoModal } from '../components/VideoModal';
@@ -32,6 +33,7 @@ export const MyRoutinesView = () => {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
   const [videoExercise, setVideoExercise] = useState(null);
+  const [videoInitialTab, setVideoInitialTab] = useState('youtube');
 
   // View Mode: 'list' | 'calendar'
   const [viewMode, setViewMode] = useState('list');
@@ -754,25 +756,59 @@ export const MyRoutinesView = () => {
                         </div>
 
                         {item.exercise && (
-                          <button
-                            onClick={() => setVideoExercise(item.exercise)}
-                            style={{
-                              padding: '8px 14px',
-                              borderRadius: '10px',
-                              backgroundColor: 'rgba(110, 136, 66, 0.2)',
-                              border: '1px solid rgba(137, 168, 84, 0.4)',
-                              color: '#FFF',
-                              cursor: 'pointer',
-                              fontWeight: 600,
-                              fontSize: '12px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px'
-                            }}
-                          >
-                            <Play size={14} />
-                            Video de Técnica
-                          </button>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            {item.exercise.youtube_url && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setVideoInitialTab('youtube');
+                                  setVideoExercise(item.exercise);
+                                }}
+                                style={{
+                                  padding: '7px 12px',
+                                  borderRadius: '10px',
+                                  backgroundColor: 'rgba(110, 136, 66, 0.2)',
+                                  border: '1px solid rgba(137, 168, 84, 0.4)',
+                                  color: '#FFF',
+                                  cursor: 'pointer',
+                                  fontWeight: 600,
+                                  fontSize: '12px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px'
+                                }}
+                              >
+                                <Play size={13} />
+                                Video
+                              </button>
+                            )}
+                            {item.exercise.gif_url && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setVideoInitialTab('gif');
+                                  setVideoExercise(item.exercise);
+                                }}
+                                title="Ver técnica 3D en bucle continuo"
+                                style={{
+                                  padding: '7px 12px',
+                                  borderRadius: '10px',
+                                  backgroundColor: 'rgba(26, 36, 21, 0.85)',
+                                  border: '1px solid rgba(137, 168, 84, 0.55)',
+                                  color: '#DEEAC1',
+                                  cursor: 'pointer',
+                                  fontWeight: 700,
+                                  fontSize: '12px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px'
+                                }}
+                              >
+                                <Film size={13} color="#89A854" />
+                                GIF 3D
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
 
@@ -1270,6 +1306,7 @@ export const MyRoutinesView = () => {
       <VideoModal
         isOpen={!!videoExercise}
         exercise={videoExercise}
+        initialTab={videoInitialTab}
         onClose={() => setVideoExercise(null)}
       />
     </div>

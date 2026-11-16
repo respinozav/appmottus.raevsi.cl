@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS bdmottus.exercises (
     name VARCHAR(200) NOT NULL,
     description TEXT,
     youtube_url VARCHAR(500) NOT NULL,
+    gif_url VARCHAR(500),
     created_by UUID REFERENCES bdmottus.users(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

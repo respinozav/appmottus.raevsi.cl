@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Play, Plus, Search, Filter, Dumbbell, Trash2, Video, 
-  Pencil, Check, X, Power, FolderCog, AlertCircle, CheckCircle2, XCircle, ToggleLeft, ToggleRight
+  Pencil, Check, X, Power, FolderCog, AlertCircle, CheckCircle2, XCircle, ToggleLeft, ToggleRight,
+  Film, Sparkles
 } from 'lucide-react';
 import api from '../services/api';
 import { VideoModal } from '../components/VideoModal';
+import { GifLibraryModal } from '../components/GifLibraryModal';
 import { useAuth } from '../context/AuthContext';
 
 export const ExercisesView = () => {
@@ -15,15 +17,19 @@ export const ExercisesView = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Modal Video
+  // Modal Video & GIF
   const [activeVideoExercise, setActiveVideoExercise] = useState(null);
+  const [videoModalInitialTab, setVideoModalInitialTab] = useState('youtube');
 
-  // Modal Create Exercise
+  // Modal Create / Edit Exercise
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingExercise, setEditingExercise] = useState(null);
+  const [showGifLibraryModal, setShowGifLibraryModal] = useState(false);
   const [newExercise, setNewExercise] = useState({
     name: '',
     category_id: '',
     youtube_url: '',
+    gif_url: '',
     description: ''
   });
   const [creating, setCreating] = useState(false);
@@ -69,23 +75,73 @@ export const ExercisesView = () => {
   }, []);
 
   // Manejo de Ejercicios
-  const handleCreateExercise = async (e) => {
+  const handleOpenCreateExercise = () => {
+    setEditingExercise(null);
+    const activeCats = categories.filter(c => c.is_active);
+    setNewExercise({
+      name: '',
+      category_id: activeCats[0]?.id || '',
+      youtube_url: '',
+      gif_url: '',
+      description: ''
+    });
+    setCreateError('');
+    setShowCreateModal(true);
+  };
+
+  const handleOpenEditExercise = (exercise, e) => {
+    e.stopPropagation();
+    setEditingExercise(exercise);
+    setNewExercise({
+      name: exercise.name,
+      category_id: exercise.category_id,
+      youtube_url: exercise.youtube_url || '',
+      gif_url: exercise.gif_url || '',
+      description: exercise.description || ''
+    });
+    setCreateError('');
+    setShowCreateModal(true);
+  };
+
+  const handleSelectGifFromLibrary = (gifItem) => {
+    setNewExercise(prev => {
+      const updated = { ...prev, gif_url: gifItem.gifUrl };
+      if (!prev.name.trim()) {
+        updated.name = gifItem.name;
+      }
+      if (gifItem.bodyPart) {
+        const match = categories.find(c => c.is_active && c.name.toLowerCase().includes(gifItem.bodyPart.toLowerCase()));
+        if (match) {
+          updated.category_id = match.id;
+        }
+      }
+      return updated;
+    });
+  };
+
+  const handleSaveExercise = async (e) => {
     e.preventDefault();
     setCreating(true);
     setCreateError('');
     try {
-      await api.post('/exercises/', newExercise);
+      if (editingExercise) {
+        await api.put(`/exercises/${editingExercise.id}`, newExercise);
+      } else {
+        await api.post('/exercises/', newExercise);
+      }
       setShowCreateModal(false);
+      setEditingExercise(null);
       const activeCats = categories.filter(c => c.is_active);
       setNewExercise({ 
         name: '', 
         category_id: activeCats[0]?.id || '', 
         youtube_url: '', 
+        gif_url: '',
         description: '' 
       });
       fetchData();
     } catch (err) {
-      setCreateError(err.response?.data?.detail || 'Error al crear el ejercicio.');
+      setCreateError(err.response?.data?.detail || 'Error al guardar el ejercicio.');
     } finally {
       setCreating(false);
     }
@@ -257,7 +313,7 @@ export const ExercisesView = () => {
             </button>
 
             <button
-              onClick={() => setShowCreateModal(true)}
+              onClick={handleOpenCreateExercise}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -495,6 +551,41 @@ export const ExercisesView = () => {
                     {exercise.category?.name || 'General'}
                     {!isCatActive && ' (Archivada)'}
                   </span>
+
+                  {/* Badge de GIF 3D si existe */}
+                  {exercise.gif_url && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setVideoModalInitialTab('gif');
+                        setActiveVideoExercise(exercise);
+                      }}
+                      title="Ver técnica 3D en bucle (GIF)"
+                      style={{
+                        position: 'absolute',
+                        top: '12px',
+                        right: '12px',
+                        backgroundColor: 'rgba(24, 34, 18, 0.92)',
+                        backdropFilter: 'blur(8px)',
+                        color: '#DEEAC1',
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        padding: '4px 8px',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(137, 168, 84, 0.6)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                        zIndex: 2
+                      }}
+                    >
+                      <Film size={12} color="#89A854" />
+                      <span>GIF 3D</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Card Content */}
@@ -504,22 +595,40 @@ export const ExercisesView = () => {
                       {exercise.name}
                     </h3>
                     {isCoachOrAdmin && (
-                      <button
-                        onClick={(e) => handleDeleteExercise(exercise.id, e)}
-                        title="Eliminar ejercicio"
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: 'var(--md-sys-color-outline)',
-                          cursor: 'pointer',
-                          padding: '4px',
-                          borderRadius: '6px'
-                        }}
-                        onMouseOver={(e) => e.currentTarget.style.color = 'var(--md-sys-color-error)'}
-                        onMouseOut={(e) => e.currentTarget.style.color = 'var(--md-sys-color-outline)'}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <button
+                          onClick={(e) => handleOpenEditExercise(exercise, e)}
+                          title="Editar ejercicio y recursos visuales"
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--md-sys-color-outline)',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            borderRadius: '6px'
+                          }}
+                          onMouseOver={(e) => e.currentTarget.style.color = 'var(--md-sys-color-secondary)'}
+                          onMouseOut={(e) => e.currentTarget.style.color = 'var(--md-sys-color-outline)'}
+                        >
+                          <Pencil size={15} />
+                        </button>
+                        <button
+                          onClick={(e) => handleDeleteExercise(exercise.id, e)}
+                          title="Eliminar ejercicio"
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--md-sys-color-outline)',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            borderRadius: '6px'
+                          }}
+                          onMouseOver={(e) => e.currentTarget.style.color = 'var(--md-sys-color-error)'}
+                          onMouseOut={(e) => e.currentTarget.style.color = 'var(--md-sys-color-outline)'}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
                     )}
                   </div>
                   <p style={{
@@ -545,16 +654,40 @@ export const ExercisesView = () => {
       <VideoModal
         isOpen={!!activeVideoExercise}
         exercise={activeVideoExercise}
+        initialTab={videoModalInitialTab}
         onClose={() => setActiveVideoExercise(null)}
       />
 
-      {/* Modal: Create Exercise */}
+      {/* Modal: Selector de GIFs de la Biblioteca Gratuita */}
+      <GifLibraryModal
+        isOpen={showGifLibraryModal}
+        onClose={() => setShowGifLibraryModal(false)}
+        onSelect={handleSelectGifFromLibrary}
+        currentGifUrl={newExercise.gif_url}
+      />
+
+      {/* Modal: Create / Edit Exercise */}
       {showCreateModal && (
-        <div style={modalBackdropStyle} onClick={() => setShowCreateModal(false)}>
-          <div className="responsive-modal-box" style={{ ...modalBoxStyle, width: '100%', maxWidth: '540px' }} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#FFF', marginBottom: '16px' }}>
-              Registrar Nuevo Ejercicio
-            </h2>
+        <div style={modalBackdropStyle} onClick={() => { setShowCreateModal(false); setEditingExercise(null); }}>
+          <div className="responsive-modal-box" style={{ ...modalBoxStyle, width: '100%', maxWidth: '560px' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#FFF' }}>
+                {editingExercise ? `Editar Ejercicio: "${editingExercise.name}"` : 'Registrar Nuevo Ejercicio'}
+              </h2>
+              <button
+                type="button"
+                onClick={() => { setShowCreateModal(false); setEditingExercise(null); }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--md-sys-color-on-surface-variant)',
+                  cursor: 'pointer',
+                  padding: '4px'
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
 
             {createError && (
               <p style={{ color: 'var(--md-sys-color-error)', fontSize: '13px', marginBottom: '12px' }}>
@@ -562,7 +695,7 @@ export const ExercisesView = () => {
               </p>
             )}
 
-            <form onSubmit={handleCreateExercise} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <form onSubmit={handleSaveExercise} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
                 <label style={labelStyle}>Categoría Muscular *</label>
                 <select
@@ -603,7 +736,103 @@ export const ExercisesView = () => {
                   style={inputStyle}
                 />
                 <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '4px', display: 'block' }}>
-                  El video se reproducirá en un modal flotante dentro de la app.
+                  El video explicativo se reproducirá en un modal flotante dentro de la app.
+                </span>
+              </div>
+
+              {/* Selector de GIF Animado de Técnica */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label style={labelStyle}>GIF Animado de Técnica (Loop 3D)</label>
+                  <button
+                    type="button"
+                    onClick={() => setShowGifLibraryModal(true)}
+                    style={{
+                      padding: '5px 12px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(110, 136, 66, 0.25)',
+                      border: '1px solid rgba(137, 168, 84, 0.45)',
+                      color: '#DEEAC1',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(110, 136, 66, 0.4)'}
+                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'rgba(110, 136, 66, 0.25)'}
+                  >
+                    <Film size={14} color="#89A854" />
+                    <span>🔍 Seleccionar de Biblioteca de GIFs</span>
+                  </button>
+                </div>
+
+                <input
+                  type="url"
+                  placeholder="https://... o usa el botón para elegir de la biblioteca"
+                  value={newExercise.gif_url}
+                  onChange={(e) => setNewExercise({ ...newExercise, gif_url: e.target.value })}
+                  style={inputStyle}
+                />
+
+                {newExercise.gif_url && (
+                  <div style={{
+                    marginTop: '8px',
+                    padding: '8px 12px',
+                    borderRadius: '12px',
+                    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+                    border: '1px solid rgba(110, 136, 66, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px'
+                  }}>
+                    <img
+                      src={newExercise.gif_url}
+                      alt="Preview GIF"
+                      style={{
+                        width: '54px',
+                        height: '54px',
+                        objectFit: 'contain',
+                        borderRadius: '8px',
+                        backgroundColor: '#0A0E0B',
+                        border: '1px solid rgba(255,255,255,0.08)'
+                      }}
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: '11px', color: '#DEEAC1', fontWeight: 800, textTransform: 'uppercase' }}>
+                        Animación 3D Vinculada
+                      </span>
+                      <div style={{
+                        fontSize: '11.5px',
+                        color: 'var(--md-sys-color-on-surface-variant)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {newExercise.gif_url}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setNewExercise({ ...newExercise, gif_url: '' })}
+                      title="Quitar GIF"
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--md-sys-color-error)',
+                        cursor: 'pointer',
+                        padding: '6px',
+                        borderRadius: '6px'
+                      }}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
+                <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '4px', display: 'block' }}>
+                  Tendrás tanto el video de YouTube como la animación en bucle para el alumno.
                 </span>
               </div>
 
@@ -621,7 +850,7 @@ export const ExercisesView = () => {
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '12px' }}>
                 <button
                   type="button"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={() => { setShowCreateModal(false); setEditingExercise(null); }}
                   style={{
                     padding: '10px 18px',
                     borderRadius: '12px',
@@ -646,7 +875,7 @@ export const ExercisesView = () => {
                     cursor: creating ? 'not-allowed' : 'pointer'
                   }}
                 >
-                  {creating ? 'Guardando...' : 'Guardar Ejercicio'}
+                  {creating ? 'Guardando...' : editingExercise ? 'Actualizar Ejercicio' : 'Guardar Ejercicio'}
                 </button>
               </div>
             </form>

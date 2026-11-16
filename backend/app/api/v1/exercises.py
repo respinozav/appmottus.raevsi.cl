@@ -1,3 +1,5 @@
+import os
+import json
 import re
 from typing import List, Optional
 from uuid import UUID
@@ -5,10 +7,12 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session, joinedload
 from app.core.database import get_db
 from app.models.models import Exercise, Category, User
-from app.schemas.schemas import ExerciseCreate, ExerciseOut
+from app.schemas.schemas import ExerciseCreate, ExerciseUpdate, ExerciseOut
 from app.api.deps import get_current_user, require_coach
 
 router = APIRouter()
+
+CATALOG_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "exercise_gifs_catalog.json")
 
 def normalize_youtube_url(url: str) -> str:
     """
@@ -20,7 +24,6 @@ def normalize_youtube_url(url: str) -> str:
     - https://www.youtube.com/shorts/VIDEO_ID
     """
     url = url.strip()
-    # Extraer ID
     regex = r'(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/|youtube\.com\/shorts\/)([^"&?\/\s]{11})'
     match = re.search(regex, url)
     if not match:
@@ -46,6 +49,44 @@ def list_exercises(
         query = query.filter(Exercise.category_id == category_id)
     return query.order_by(Exercise.created_at.desc()).all()
 
+@router.get("/library-gifs")
+def get_library_gifs(
+    search: Optional[str] = Query(None, description="Buscar por nombre o músculo"),
+    category: Optional[str] = Query(None, description="Filtrar por grupo/zona corporal"),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Retorna el catálogo curado de GIFs animados de técnica de libre uso.
+    """
+    if not os.path.exists(CATALOG_PATH):
+        return {"count": 0, "exercises": []}
+    
+    try:
+        with open(CATALOG_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al leer el catálogo de GIFs: {str(e)}"
+        )
+    
+    exercises = data.get("exercises", [])
+    
+    if category and category.lower() != "todos":
+        cat_lower = category.lower()
+        exercises = [e for e in exercises if cat_lower in e.get("bodyPart", "").lower()]
+        
+    if search:
+        s_lower = search.lower().strip()
+        exercises = [
+            e for e in exercises 
+            if s_lower in e.get("name", "").lower() 
+            or s_lower in e.get("muscle", "").lower() 
+            or s_lower in e.get("equipment", "").lower()
+        ]
+        
+    return {"count": len(exercises), "exercises": exercises}
+
 @router.post("/", response_model=ExerciseOut)
 def create_exercise(
     data: ExerciseCreate,
@@ -53,9 +94,8 @@ def create_exercise(
     current_coach: User = Depends(require_coach)
 ):
     """
-    Solo Coaches y Administradores pueden registrar nuevos ejercicios con URL de YouTube.
+    Solo Coaches y Administradores pueden registrar nuevos ejercicios con URL de YouTube y GIF opcional.
     """
-    # Verificar que exista la categoría
     category = db.query(Category).filter(Category.id == data.category_id).first()
     if not category:
         raise HTTPException(
@@ -63,7 +103,6 @@ def create_exercise(
             detail="La categoría especificada no existe."
         )
 
-    # Validar formato YouTube
     clean_url = normalize_youtube_url(data.youtube_url)
 
     exercise = Exercise(
@@ -71,6 +110,7 @@ def create_exercise(
         name=data.name.strip(),
         description=data.description,
         youtube_url=clean_url,
+        gif_url=data.gif_url.strip() if data.gif_url else None,
         created_by=current_coach.id
     )
     db.add(exercise)
@@ -90,6 +130,49 @@ def get_exercise_by_id(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Ejercicio no encontrado."
         )
+    return exercise
+
+@router.put("/{exercise_id}", response_model=ExerciseOut)
+def update_exercise(
+    exercise_id: UUID,
+    data: ExerciseUpdate,
+    db: Session = Depends(get_db),
+    current_coach: User = Depends(require_coach)
+):
+    """
+    Permite a Coaches y Administradores actualizar un ejercicio (nombre, descripción, categoría, youtube_url, gif_url).
+    """
+    exercise = db.query(Exercise).filter(Exercise.id == exercise_id).first()
+    if not exercise:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ejercicio no encontrado."
+        )
+
+    if data.category_id is not None:
+        category = db.query(Category).filter(Category.id == data.category_id).first()
+        if not category:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="La categoría especificada no existe."
+            )
+        exercise.category_id = data.category_id
+
+    if data.name is not None:
+        exercise.name = data.name.strip()
+
+    if data.description is not None:
+        exercise.description = data.description
+
+    if data.youtube_url is not None:
+        clean_url = normalize_youtube_url(data.youtube_url)
+        exercise.youtube_url = clean_url
+
+    if data.gif_url is not None:
+        exercise.gif_url = data.gif_url.strip() if data.gif_url else None
+
+    db.commit()
+    db.refresh(exercise)
     return exercise
 
 @router.delete("/{exercise_id}", status_code=status.HTTP_204_NO_CONTENT)
