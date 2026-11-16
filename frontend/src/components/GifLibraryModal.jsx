@@ -10,6 +10,11 @@ export const GifLibraryModal = ({ isOpen, onClose, onSelect, currentGifUrl }) =>
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
+  const [visibleCount, setVisibleCount] = useState(36);
+
+  useEffect(() => {
+    setVisibleCount(36);
+  }, [searchTerm, selectedCategory]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -48,6 +53,10 @@ export const GifLibraryModal = ({ isOpen, onClose, onSelect, currentGifUrl }) =>
       return matchCat && matchSearch;
     });
   }, [exercises, selectedCategory, searchTerm]);
+
+  const displayedList = useMemo(() => {
+    return filteredList.slice(0, visibleCount);
+  }, [filteredList, visibleCount]);
 
   if (!isOpen) return null;
 
@@ -273,7 +282,7 @@ export const GifLibraryModal = ({ isOpen, onClose, onSelect, currentGifUrl }) =>
                 gap: '16px'
               }}
             >
-              {filteredList.map((item) => {
+              {displayedList.map((item) => {
                 const isCurrent = currentGifUrl === item.gifUrl;
                 return (
                   <div
@@ -417,6 +426,34 @@ export const GifLibraryModal = ({ isOpen, onClose, onSelect, currentGifUrl }) =>
               })}
             </div>
           )}
+
+          {visibleCount < filteredList.length && !loading && !error && (
+            <div style={{ textAlign: 'center', paddingTop: '20px', paddingBottom: '10px' }}>
+              <button
+                type="button"
+                onClick={() => setVisibleCount((prev) => prev + 36)}
+                style={{
+                  padding: '10px 24px',
+                  borderRadius: '12px',
+                  backgroundColor: 'rgba(110, 136, 66, 0.25)',
+                  border: '1px solid rgba(137, 168, 84, 0.45)',
+                  color: '#DEEAC1',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'rgba(110, 136, 66, 0.4)')}
+                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'rgba(110, 136, 66, 0.25)')}
+              >
+                <Sparkles size={14} color="#89A854" />
+                Cargar más animaciones ({filteredList.length - visibleCount} restantes)
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Footer info */}
@@ -432,7 +469,9 @@ export const GifLibraryModal = ({ isOpen, onClose, onSelect, currentGifUrl }) =>
             color: 'var(--md-sys-color-on-surface-variant)'
           }}
         >
-          <span>Mostrando {filteredList.length} animaciones disponibles</span>
+          <span>
+            Mostrando {Math.min(visibleCount, filteredList.length)} de {filteredList.length} animaciones disponibles
+          </span>
           <button
             type="button"
             onClick={onClose}
