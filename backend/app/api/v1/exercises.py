@@ -39,14 +39,17 @@ def normalize_youtube_url(url: Optional[str]) -> Optional[str]:
 @router.get("/", response_model=List[ExerciseOut])
 def list_exercises(
     category_id: Optional[UUID] = Query(None, description="Filtrar por categoría"),
+    include_inactive: bool = Query(False, description="Incluir ejercicios desactivados/archivados"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """
-    Lista todos los ejercicios con sus categorías asociadas.
-    Permite filtrar por categoría.
+    Lista los ejercicios con sus categorías asociadas.
+    Por defecto retorna solo ejercicios activos (is_active = True).
     """
     query = db.query(Exercise).options(joinedload(Exercise.category))
+    if not include_inactive:
+        query = query.filter(Exercise.is_active == True)
     if category_id:
         query = query.filter(Exercise.category_id == category_id)
     return query.order_by(Exercise.created_at.desc()).all()
@@ -180,22 +183,50 @@ def update_exercise(
     if data.gif_url is not None:
         exercise.gif_url = data.gif_url.strip() if data.gif_url else None
 
+    if data.is_active is not None:
+        exercise.is_active = data.is_active
+
     db.commit()
     db.refresh(exercise)
     return exercise
 
-@router.delete("/{exercise_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{exercise_id}", response_model=ExerciseOut)
 def delete_exercise(
     exercise_id: UUID,
     db: Session = Depends(get_db),
     current_coach: User = Depends(require_coach)
 ):
-    exercise = db.query(Exercise).filter(Exercise.id == exercise_id).first()
+    """
+    Desactivación lógica (Soft-Delete): Nunca elimina físicamente un ejercicio
+    para proteger la integridad de historiales y métricas de alumnos.
+    """
+    exercise = db.query(Exercise).options(joinedload(Exercise.category)).filter(Exercise.id == exercise_id).first()
     if not exercise:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Ejercicio no encontrado."
         )
-    db.delete(exercise)
+    exercise.is_active = False
     db.commit()
-    return None
+    db.refresh(exercise)
+    return exercise
+
+@router.patch("/{exercise_id}/toggle-active", response_model=ExerciseOut)
+def toggle_exercise_active(
+    exercise_id: UUID,
+    db: Session = Depends(get_db),
+    current_coach: User = Depends(require_coach)
+):
+    """
+    Alterna el estado activo/archivado de un ejercicio con un clic.
+    """
+    exercise = db.query(Exercise).options(joinedload(Exercise.category)).filter(Exercise.id == exercise_id).first()
+    if not exercise:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ejercicio no encontrado."
+        )
+    exercise.is_active = not exercise.is_active
+    db.commit()
+    db.refresh(exercise)
+    return exercise

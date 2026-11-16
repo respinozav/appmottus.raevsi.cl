@@ -298,6 +298,11 @@ EOF
         python -c "import psycopg2, os; conn=psycopg2.connect(host=os.getenv('DB_HOST', 'ls-b12cc9081f17b594187264e8c7fe42119a9bb93f.cgt2s428cp85.us-east-1.rds.amazonaws.com'), port=int(os.getenv('DB_PORT', 5432)), dbname=os.getenv('DB_NAME', 'postgres'), user=os.getenv('DB_USER', 'usr_mottus'), password=os.getenv('DB_PASSWORD', 'M0ttus#Gym_2026_SecPass!'), sslmode='require'); cur=conn.cursor(); cur.execute('SELECT COUNT(*) FROM bdmottus.exercises;'); count=cur.fetchone()[0]; exit(0 if count > 0 else 1)" || python migrate_clean_and_seed_from_gifs.py
     fi
 
+    if [ -f "migrate_exercise_soft_delete.py" ]; then
+        echo "Ejecutando migración de desactivación lógica (is_active) en ejercicios..."
+        python migrate_exercise_soft_delete.py || echo "Aviso: migración is_active omitida o ya aplicada"
+    fi
+
     ########################################
     # SEED USERS & PASSWORDS
     ########################################

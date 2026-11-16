@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Play, Plus, Search, Filter, Dumbbell, Trash2, Video, 
+  Play, Plus, Search, Filter, Dumbbell, Video, 
   Pencil, Check, X, Power, FolderCog, AlertCircle, CheckCircle2, XCircle, ToggleLeft, ToggleRight,
-  Film, Sparkles
+  Film, Sparkles, Archive, RotateCcw
 } from 'lucide-react';
 import api from '../services/api';
 import { VideoModal } from '../components/VideoModal';
@@ -15,6 +15,7 @@ export const ExercisesView = () => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showArchivedExercises, setShowArchivedExercises] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Modal Video & GIF
@@ -53,7 +54,7 @@ export const ExercisesView = () => {
     setLoading(true);
     try {
       const [exRes, catRes] = await Promise.all([
-        api.get('/exercises/'),
+        api.get(`/exercises/?include_inactive=${showArchivedExercises}`),
         api.get('/categories/')
       ]);
       setExercises(exRes.data);
@@ -72,7 +73,7 @@ export const ExercisesView = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [showArchivedExercises]);
 
   // Manejo de Ejercicios
   const handleOpenCreateExercise = () => {
@@ -151,14 +152,20 @@ export const ExercisesView = () => {
     }
   };
 
-  const handleDeleteExercise = async (id, e) => {
+  const handleToggleExerciseActive = async (exercise, e) => {
     e.stopPropagation();
-    if (window.confirm('¿Seguro que deseas eliminar este ejercicio?')) {
+    const actionText = exercise.is_active ? 'desactivar y archivar' : 'reactivar';
+    const confirmMessage = exercise.is_active
+      ? `¿Deseas desactivar el ejercicio "${exercise.name}"?\n\nNo se eliminará del historial de los alumnos ni de rutinas pasadas, pero quedará archivado para nuevas asignaciones.`
+      : `¿Deseas reactivar el ejercicio "${exercise.name}" para que vuelva a estar disponible en las rutinas?`;
+
+    if (window.confirm(confirmMessage)) {
       try {
-        await api.delete(`/exercises/${id}`);
+        await api.patch(`/exercises/${exercise.id}/toggle-active`);
         fetchData();
       } catch (err) {
-        alert('Error al eliminar el ejercicio');
+        console.error('Error al cambiar estado del ejercicio:', err);
+        alert(`Error al ${actionText} el ejercicio.`);
       }
     }
   };
@@ -434,6 +441,34 @@ export const ExercisesView = () => {
             );
           })}
         </div>
+
+        {/* Toggle Ver Archivados (Coach / Admin) */}
+        {isCoachOrAdmin && (
+          <button
+            type="button"
+            onClick={() => setShowArchivedExercises(prev => !prev)}
+            style={{
+              padding: '8px 14px',
+              borderRadius: '12px',
+              border: showArchivedExercises ? '1px solid rgba(255, 180, 171, 0.6)' : '1px solid var(--md-sys-color-outline-variant)',
+              backgroundColor: showArchivedExercises ? 'rgba(147, 0, 10, 0.25)' : 'var(--md-sys-color-surface-variant)',
+              color: showArchivedExercises ? '#FFB4AB' : 'var(--md-sys-color-on-surface-variant)',
+              cursor: 'pointer',
+              fontSize: '12.5px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.2s',
+              marginLeft: 'auto'
+            }}
+            title="Alternar vista de ejercicios archivados"
+          >
+            <Archive size={15} color={showArchivedExercises ? '#FFB4AB' : 'currentColor'} />
+            <span>{showArchivedExercises ? 'Ocultar Archivados' : 'Ver Archivados'}</span>
+          </button>
+        )}
       </div>
 
       {/* Grid of Exercises */}
@@ -476,7 +511,10 @@ export const ExercisesView = () => {
                   overflow: 'hidden',
                   display: 'flex',
                   flexDirection: 'column',
-                  position: 'relative'
+                  position: 'relative',
+                  opacity: exercise.is_active ? 1 : 0.78,
+                  border: exercise.is_active ? '1px solid var(--md-sys-color-outline-variant)' : '1px dashed rgba(255, 180, 171, 0.45)',
+                  backgroundColor: exercise.is_active ? 'var(--md-sys-color-surface)' : 'rgba(25, 12, 12, 0.4)'
                 }}
               >
                 {/* Thumbnail with Play Hover Overlay */}
@@ -611,6 +649,31 @@ export const ExercisesView = () => {
                       <span>GIF 3D</span>
                     </button>
                   )}
+
+                  {/* Badge de Archivado si está desactivado */}
+                  {!exercise.is_active && (
+                    <span style={{
+                      position: 'absolute',
+                      bottom: '12px',
+                      left: '12px',
+                      backgroundColor: 'rgba(50, 15, 15, 0.92)',
+                      backdropFilter: 'blur(8px)',
+                      color: '#FFB4AB',
+                      fontSize: '10.5px',
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      border: '1px solid rgba(255, 180, 171, 0.5)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      zIndex: 2
+                    }}>
+                      <Archive size={11} color="#FFB4AB" />
+                      <span>Archivado</span>
+                    </span>
+                  )}
                 </div>
 
                 {/* Card Content */}
@@ -620,10 +683,10 @@ export const ExercisesView = () => {
                       {exercise.name}
                     </h3>
                     {isCoachOrAdmin && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <button
                           onClick={(e) => handleOpenEditExercise(exercise, e)}
-                          title="Editar ejercicio y recursos visuales"
+                          title="Editar ejercicio, categoría y recursos"
                           style={{
                             background: 'transparent',
                             border: 'none',
@@ -638,20 +701,20 @@ export const ExercisesView = () => {
                           <Pencil size={15} />
                         </button>
                         <button
-                          onClick={(e) => handleDeleteExercise(exercise.id, e)}
-                          title="Eliminar ejercicio"
+                          onClick={(e) => handleToggleExerciseActive(exercise, e)}
+                          title={exercise.is_active ? "Desactivar ejercicio (no se borrará del historial)" : "Reactivar ejercicio"}
                           style={{
                             background: 'transparent',
                             border: 'none',
-                            color: 'var(--md-sys-color-outline)',
+                            color: exercise.is_active ? 'var(--md-sys-color-outline)' : '#89A854',
                             cursor: 'pointer',
                             padding: '4px',
                             borderRadius: '6px'
                           }}
-                          onMouseOver={(e) => e.currentTarget.style.color = 'var(--md-sys-color-error)'}
-                          onMouseOut={(e) => e.currentTarget.style.color = 'var(--md-sys-color-outline)'}
+                          onMouseOver={(e) => e.currentTarget.style.color = exercise.is_active ? '#FFB4AB' : '#DEEAC1'}
+                          onMouseOut={(e) => e.currentTarget.style.color = exercise.is_active ? 'var(--md-sys-color-outline)' : '#89A854'}
                         >
-                          <Trash2 size={15} />
+                          {exercise.is_active ? <Archive size={15} /> : <RotateCcw size={15} />}
                         </button>
                       </div>
                     )}

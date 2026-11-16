@@ -131,6 +131,7 @@ class Exercise(Base):
     description = Column(Text, nullable=True)
     youtube_url = Column(String(500), nullable=True)
     gif_url = Column(String(500), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
     created_by = Column(UUID(as_uuid=True), ForeignKey("bdmottus.users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

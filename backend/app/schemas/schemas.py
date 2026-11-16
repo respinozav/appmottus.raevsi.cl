@@ -167,6 +167,7 @@ class ExerciseBase(BaseModel):
     description: Optional[str] = None
     youtube_url: Optional[str] = None
     gif_url: Optional[str] = None
+    is_active: bool = True
 
 class ExerciseCreate(ExerciseBase):
     pass
@@ -177,6 +178,7 @@ class ExerciseUpdate(BaseModel):
     description: Optional[str] = None
     youtube_url: Optional[str] = None
     gif_url: Optional[str] = None
+    is_active: Optional[bool] = None
 
 class ExerciseOut(ExerciseBase):
     id: UUID
