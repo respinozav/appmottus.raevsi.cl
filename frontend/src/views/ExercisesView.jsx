@@ -121,6 +121,10 @@ export const ExercisesView = () => {
 
   const handleSaveExercise = async (e) => {
     e.preventDefault();
+    if (!newExercise.youtube_url?.trim() && !newExercise.gif_url?.trim()) {
+      setCreateError('Debes ingresar al menos un recurso visual: URL de YouTube o un GIF animado de técnica.');
+      return;
+    }
     setCreating(true);
     setCreateError('');
     try {
@@ -498,6 +502,27 @@ export const ExercisesView = () => {
                       onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
                       onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
                     />
+                  ) : exercise.gif_url ? (
+                    <img
+                      src={exercise.gif_url}
+                      alt={exercise.name}
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                      crossOrigin="anonymous"
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                        backgroundColor: '#0A0E0B',
+                        padding: '4px',
+                        transition: 'transform 0.3s ease'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                      onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    />
                   ) : (
                     <div style={{
                       position: 'absolute',
@@ -506,7 +531,7 @@ export const ExercisesView = () => {
                       alignItems: 'center',
                       justifyContent: 'center'
                     }}>
-                      <Video size={36} color="var(--md-sys-color-secondary)" />
+                      <Film size={36} color="var(--md-sys-color-secondary)" />
                     </div>
                   )}
 
@@ -726,17 +751,16 @@ export const ExercisesView = () => {
               </div>
 
               <div>
-                <label style={labelStyle}>URL de YouTube *</label>
+                <label style={labelStyle}>URL de YouTube (Opcional si vinculas GIF)</label>
                 <input
                   type="url"
                   placeholder="https://www.youtube.com/watch?v=... o https://youtu.be/..."
-                  required
                   value={newExercise.youtube_url}
                   onChange={(e) => setNewExercise({ ...newExercise, youtube_url: e.target.value })}
                   style={inputStyle}
                 />
                 <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '4px', display: 'block' }}>
-                  El video explicativo se reproducirá en un modal flotante dentro de la app.
+                  Video explicativo extendido. Puedes ingresar solo YouTube, solo GIF, o ambos.
                 </span>
               </div>
 

@@ -165,7 +165,7 @@ class ExerciseBase(BaseModel):
     category_id: UUID
     name: str
     description: Optional[str] = None
-    youtube_url: str
+    youtube_url: Optional[str] = None
     gif_url: Optional[str] = None
 
 class ExerciseCreate(ExerciseBase):

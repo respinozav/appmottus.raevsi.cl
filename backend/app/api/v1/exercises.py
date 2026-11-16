@@ -14,7 +14,7 @@ router = APIRouter()
 
 CATALOG_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "exercise_gifs_catalog.json")
 
-def normalize_youtube_url(url: str) -> str:
+def normalize_youtube_url(url: Optional[str]) -> Optional[str]:
     """
     Valida y normaliza la URL de YouTube a un formato estándar embed o watch.
     Acepta:
@@ -23,6 +23,8 @@ def normalize_youtube_url(url: str) -> str:
     - https://www.youtube.com/embed/VIDEO_ID
     - https://www.youtube.com/shorts/VIDEO_ID
     """
+    if not url or not url.strip():
+        return None
     url = url.strip()
     regex = r'(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/|youtube\.com\/shorts\/)([^"&?\/\s]{11})'
     match = re.search(regex, url)
@@ -104,13 +106,20 @@ def create_exercise(
         )
 
     clean_url = normalize_youtube_url(data.youtube_url)
+    clean_gif = data.gif_url.strip() if data.gif_url else None
+
+    if not clean_url and not clean_gif:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El ejercicio debe incluir al menos una demostración visual: video de YouTube o GIF animado."
+        )
 
     exercise = Exercise(
         category_id=data.category_id,
         name=data.name.strip(),
         description=data.description,
         youtube_url=clean_url,
-        gif_url=data.gif_url.strip() if data.gif_url else None,
+        gif_url=clean_gif,
         created_by=current_coach.id
     )
     db.add(exercise)
