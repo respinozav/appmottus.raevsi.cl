@@ -320,6 +320,20 @@ export const GifLibraryModal = ({ isOpen, onClose, onSelect, currentGifUrl }) =>
                         src={item.gifUrl}
                         alt={item.name}
                         loading="lazy"
+                        referrerPolicy="no-referrer"
+                        crossOrigin="anonymous"
+                        onError={(e) => {
+                          const currentSrc = e.currentTarget.src;
+                          if (currentSrc.includes('cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB')) {
+                            e.currentTarget.src = currentSrc.replace(
+                              'https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0',
+                              'https://raw.githubusercontent.com/JahelCuadrado/ExerciseGymGifsDB/main'
+                            );
+                          } else {
+                            // Ocultar si falla también el fallback de github raw para evitar el ícono roto
+                            e.currentTarget.style.opacity = '0';
+                          }
+                        }}
                         style={{
                           position: 'absolute',
                           top: 0,
@@ -327,7 +341,8 @@ export const GifLibraryModal = ({ isOpen, onClose, onSelect, currentGifUrl }) =>
                           width: '100%',
                           height: '100%',
                           objectFit: 'contain',
-                          padding: '4px'
+                          padding: '4px',
+                          transition: 'opacity 0.2s ease'
                         }}
                       />
                       {isCurrent && (

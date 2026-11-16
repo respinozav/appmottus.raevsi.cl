@@ -1,5 +1,5 @@
 {
-  "count": 60,
+  "count": 50,
   "exercises": [
     {
       "id": "chest-barbell-bench-press",
@@ -71,7 +71,7 @@
       "bodyPart": "Espalda",
       "muscle": "Erectores espinales / Dorsales / Isquios",
       "equipment": "Barra",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/back/barbell-deadlift.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/lower-back/barbell-deadlift.gif"
     },
     {
       "id": "back-pull-ups",
@@ -79,7 +79,7 @@
       "bodyPart": "Espalda",
       "muscle": "Dorsal ancho",
       "equipment": "Barra fija",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/back/pull-up.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/lats/pull-up.gif"
     },
     {
       "id": "back-chin-ups",
@@ -87,7 +87,7 @@
       "bodyPart": "Espalda",
       "muscle": "Dorsal / Bíceps",
       "equipment": "Barra fija",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/back/chin-up.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/lats/chin-up.gif"
     },
     {
       "id": "back-lat-pulldown",
@@ -95,7 +95,7 @@
       "bodyPart": "Espalda",
       "muscle": "Dorsal ancho",
       "equipment": "Polea",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/back/cable-lat-pulldown.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/lats/cable-lat-pulldown.gif"
     },
     {
       "id": "back-barbell-row",
@@ -103,7 +103,7 @@
       "bodyPart": "Espalda",
       "muscle": "Dorsal / Trapecios / Romboides",
       "equipment": "Barra",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/back/barbell-bent-over-row.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/middle-back/barbell-bent-over-row.gif"
     },
     {
       "id": "back-seated-cable-row",
@@ -111,7 +111,7 @@
       "bodyPart": "Espalda",
       "muscle": "Dorsal / Romboides",
       "equipment": "Polea",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/back/cable-seated-row.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/middle-back/cable-seated-row.gif"
     },
     {
       "id": "back-dumbbell-one-arm-row",
@@ -119,7 +119,7 @@
       "bodyPart": "Espalda",
       "muscle": "Dorsal ancho",
       "equipment": "Mancuerna",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/back/dumbbell-one-arm-row.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/middle-back/dumbbell-one-arm-row.gif"
     },
     {
       "id": "back-t-bar-row",
@@ -127,7 +127,7 @@
       "bodyPart": "Espalda",
       "muscle": "Dorsal / Espalda media",
       "equipment": "Máquina / Barra T",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/back/lever-t-bar-row.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/middle-back/lever-t-bar-row.gif"
     },
     {
       "id": "legs-barbell-squat",
@@ -135,7 +135,7 @@
       "bodyPart": "Piernas",
       "muscle": "Cuádriceps / Glúteos",
       "equipment": "Barra",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/legs/barbell-full-squat.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/quads/barbell-full-squat.gif"
     },
     {
       "id": "legs-barbell-front-squat",
@@ -143,7 +143,7 @@
       "bodyPart": "Piernas",
       "muscle": "Cuádriceps / Core",
       "equipment": "Barra",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/legs/barbell-front-squat.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/quads/barbell-front-squat.gif"
     },
     {
       "id": "legs-leg-press-45",
@@ -151,7 +151,7 @@
       "bodyPart": "Piernas",
       "muscle": "Cuádriceps / Glúteos",
       "equipment": "Máquina",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/legs/sled-45-degrees-leg-press.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/quads/sled-45-degrees-leg-press.gif"
     },
     {
       "id": "legs-bulgarian-split-squat",
@@ -159,7 +159,7 @@
       "bodyPart": "Piernas",
       "muscle": "Cuádriceps / Glúteos",
       "equipment": "Mancuernas",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/legs/dumbbell-bulgarian-split-squat.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/quads/dumbbell-bulgarian-split-squat.gif"
     },
     {
       "id": "legs-leg-extension",
@@ -167,7 +167,7 @@
       "bodyPart": "Piernas",
       "muscle": "Cuádriceps",
       "equipment": "Máquina",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/legs/lever-leg-extension.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/quads/lever-leg-extension.gif"
     },
     {
       "id": "legs-lying-leg-curl",
@@ -175,7 +175,7 @@
       "bodyPart": "Piernas",
       "muscle": "Isquiosurales (Femorales)",
       "equipment": "Máquina",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/legs/lever-lying-leg-curl.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/hamstrings/lever-lying-leg-curl.gif"
     },
     {
       "id": "legs-romanian-deadlift",
@@ -183,7 +183,7 @@
       "bodyPart": "Piernas",
       "muscle": "Isquiosurales / Glúteos",
       "equipment": "Mancuernas",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/legs/dumbbell-romanian-deadlift.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/hamstrings/dumbbell-romanian-deadlift.gif"
     },
     {
       "id": "legs-hip-thrust",
@@ -191,7 +191,7 @@
       "bodyPart": "Piernas",
       "muscle": "Glúteo mayor",
       "equipment": "Barra",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/legs/barbell-hip-thrust.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/glutes/barbell-hip-thrust.gif"
     },
     {
       "id": "legs-hip-abduction-machine",
@@ -199,7 +199,7 @@
       "bodyPart": "Piernas",
       "muscle": "Glúteo medio y menor",
       "equipment": "Máquina",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/legs/lever-seated-hip-abduction.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/abductors/lever-seated-hip-abduction.gif"
     },
     {
       "id": "legs-standing-calf-raise",
@@ -207,7 +207,7 @@
       "bodyPart": "Piernas",
       "muscle": "Gastrocnemio (Gemelos)",
       "equipment": "Máquina / Barra",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/legs/lever-standing-calf-raise.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/calves/lever-standing-calf-raise.gif"
     },
     {
       "id": "shoulders-overhead-barbell-press",
@@ -263,7 +263,7 @@
       "bodyPart": "Hombros",
       "muscle": "Trapecio superior",
       "equipment": "Barra",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/shoulders/barbell-shrug.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/traps/barbell-shrug.gif"
     },
     {
       "id": "arms-barbell-curl",
@@ -343,7 +343,7 @@
       "bodyPart": "Core",
       "muscle": "Recto abdominal",
       "equipment": "Polea",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/core/cable-kneeling-crunch.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/abs/cable-kneeling-crunch.gif"
     },
     {
       "id": "core-hanging-leg-raise",
@@ -351,7 +351,7 @@
       "bodyPart": "Core",
       "muscle": "Abdominales inferiores / Flexores cadera",
       "equipment": "Barra fija",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/core/hanging-leg-raise.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/abs/hanging-leg-raise.gif"
     },
     {
       "id": "core-plank",
@@ -359,7 +359,7 @@
       "bodyPart": "Core",
       "muscle": "Transverso abdominal / Estabilizadores",
       "equipment": "Peso corporal",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/core/front-plank.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/abs/front-plank.gif"
     },
     {
       "id": "core-ab-roller-wheel",
@@ -367,7 +367,7 @@
       "bodyPart": "Core",
       "muscle": "Recto abdominal / Core anterior",
       "equipment": "Rueda abdominal",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/core/wheel-rollerout.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/abs/wheel-rollerout.gif"
     },
     {
       "id": "core-russian-twist",
@@ -375,7 +375,7 @@
       "bodyPart": "Core",
       "muscle": "Oblicuos",
       "equipment": "Disco / Peso corporal",
-      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/core/russian-twist.gif"
+      "gifUrl": "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/abs/russian-twist.gif"
     },
     {
       "id": "cardio-burpees",

@@ -229,6 +229,17 @@ export const VideoModal = ({ isOpen, onClose, exercise, initialTab = 'youtube' }
               <img
                 src={exercise.gif_url}
                 alt={exercise.name}
+                referrerPolicy="no-referrer"
+                crossOrigin="anonymous"
+                onError={(e) => {
+                  const currentSrc = e.currentTarget.src;
+                  if (currentSrc.includes('cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB')) {
+                    e.currentTarget.src = currentSrc.replace(
+                      'https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0',
+                      'https://raw.githubusercontent.com/JahelCuadrado/ExerciseGymGifsDB/main'
+                    );
+                  }
+                }}
                 style={{
                   maxHeight: '440px',
                   maxWidth: '100%',
@@ -282,6 +293,17 @@ export const VideoModal = ({ isOpen, onClose, exercise, initialTab = 'youtube' }
               <img
                 src={exercise.gif_url}
                 alt={exercise.name}
+                referrerPolicy="no-referrer"
+                crossOrigin="anonymous"
+                onError={(e) => {
+                  const currentSrc = e.currentTarget.src;
+                  if (currentSrc.includes('cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB')) {
+                    e.currentTarget.src = currentSrc.replace(
+                      'https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0',
+                      'https://raw.githubusercontent.com/JahelCuadrado/ExerciseGymGifsDB/main'
+                    );
+                  }
+                }}
                 style={{ maxHeight: '400px', maxWidth: '100%', objectFit: 'contain', borderRadius: '12px' }}
               />
             </div>

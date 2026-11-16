@@ -791,6 +791,17 @@ export const ExercisesView = () => {
                     <img
                       src={newExercise.gif_url}
                       alt="Preview GIF"
+                      referrerPolicy="no-referrer"
+                      crossOrigin="anonymous"
+                      onError={(e) => {
+                        const currentSrc = e.currentTarget.src;
+                        if (currentSrc.includes('cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB')) {
+                          e.currentTarget.src = currentSrc.replace(
+                            'https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0',
+                            'https://raw.githubusercontent.com/JahelCuadrado/ExerciseGymGifsDB/main'
+                          );
+                        }
+                      }}
                       style={{
                         width: '54px',
                         height: '54px',
