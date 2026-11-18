@@ -75,7 +75,7 @@ export const RegisterView = ({ token, onRegistered }) => {
   if (validating) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--md-sys-color-background)' }}>
-        <p style={{ color: 'var(--md-sys-color-tertiary)' }}>Verificando enlace de invitación Mottus Gym...</p>
+        <p style={{ color: 'var(--md-sys-color-tertiary)' }}>Verificando enlace de invitación Método FR...</p>
       </div>
     );
   }
@@ -102,7 +102,7 @@ export const RegisterView = ({ token, onRegistered }) => {
           <CheckCircle2 size={54} color="var(--md-sys-color-secondary)" style={{ margin: '0 auto 16px' }} />
           <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#FFF', marginBottom: '8px' }}>¡Registro Completado!</h2>
           <p style={{ fontSize: '15px', color: 'var(--md-sys-color-tertiary)', marginBottom: '16px' }}>
-            Bienvenido a <strong>Mottus Gym</strong>, {name}. Tu cuenta ha sido activada con éxito.
+            Bienvenido a <strong>Método FR</strong>, {name}. Tu cuenta ha sido activada con éxito.
           </p>
           <span style={{ fontSize: '13px', color: 'var(--md-sys-color-on-surface-variant)' }}>
             Redirigiendo a la pantalla de inicio de sesión...
@@ -118,20 +118,22 @@ export const RegisterView = ({ token, onRegistered }) => {
     }}>
       <div className="auth-card" style={{ maxWidth: '560px' }}>
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <div style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: '16px',
-            backgroundColor: 'var(--md-sys-color-primary)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: '12px'
-          }}>
-            <Dumbbell size={30} color="#FFF" />
-          </div>
+          <img
+            src="/logo-metodo-fr.png"
+            alt="Logo Método FR"
+            style={{
+              width: '74px',
+              height: '74px',
+              borderRadius: '16px',
+              objectFit: 'contain',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.6), 0 0 16px rgba(110, 136, 66, 0.3)',
+              border: '1px solid rgba(137, 168, 84, 0.3)',
+              backgroundColor: '#000',
+              marginBottom: '12px'
+            }}
+          />
           <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#FFF' }}>
-            Bienvenido a Mottus Gym
+            Bienvenido a Método FR
           </h1>
           <p style={{ fontSize: '13.5px', color: 'var(--md-sys-color-tertiary)', marginTop: '4px' }}>
             Completa tus datos para activar tu cuenta de entrenamiento
@@ -211,7 +213,7 @@ export const RegisterView = ({ token, onRegistered }) => {
               <input
                 type="email"
                 required
-                placeholder="ejemplo@mottus.cl"
+                placeholder="ejemplo@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 style={inputStyle}

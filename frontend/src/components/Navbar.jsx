@@ -134,39 +134,28 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
       }}>
         {/* Brand */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{
-            width: '38px',
-            height: '38px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, #6E8842 0%, #4D602E 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 0 16px rgba(110, 136, 66, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.25)',
-            flexShrink: 0
-          }}>
-            <Dumbbell size={20} color="#FFFFFF" />
-          </div>
+          <img
+            src="/logo-metodo-fr.png"
+            alt="Logo Método FR"
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '10px',
+              objectFit: 'contain',
+              flexShrink: 0,
+              boxShadow: '0 0 14px rgba(110, 136, 66, 0.35)',
+              border: '1px solid rgba(137, 168, 84, 0.3)',
+              backgroundColor: '#000'
+            }}
+          />
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ fontSize: '18px', fontWeight: 800, letterSpacing: '-0.02em', color: '#FFF' }}>
-                MOTTUS
-              </span>
-              <span style={{
-                fontSize: '10px',
-                fontWeight: 700,
-                color: 'var(--md-sys-color-primary-light)',
-                letterSpacing: '0.1em',
-                backgroundColor: 'rgba(110, 136, 66, 0.15)',
-                padding: '2px 5px',
-                borderRadius: '5px',
-                border: '1px solid rgba(110, 136, 66, 0.3)'
-              }}>
-                STUDIO
+                MÉTODO FR
               </span>
             </div>
             <span className="navbar-brand-subtitle" style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block', letterSpacing: '0.02em' }}>
-              appmottus.raevsi.cl
+              Sistema de Entrenamiento
             </span>
           </div>
         </div>

@@ -39,7 +39,7 @@ const AppContent = () => {
         backgroundColor: 'var(--md-sys-color-background)',
         color: 'var(--md-sys-color-tertiary)'
       }}>
-        Cargando Mottus Gym...
+        Cargando Método FR...
       </div>
     );
   }

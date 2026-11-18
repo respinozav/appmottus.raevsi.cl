@@ -272,7 +272,7 @@ export const DirectMessagesModal = ({ isOpen, onClose, user, initialStudentId = 
             }}>
               <div>
                 <span style={{ fontSize: '14px', fontWeight: 700, color: '#FFF' }}>
-                  {isStudent ? 'Coach Mottus' : (selectedStudent?.name || selectedStudent?.rut || 'Seleccione un alumno')}
+                  {isStudent ? 'Coach Método FR' : (selectedStudent?.name || selectedStudent?.rut || 'Seleccione un alumno')}
                 </span>
                 {!isStudent && selectedStudent && (
                   <span style={{ fontSize: '11px', color: 'var(--md-sys-color-tertiary)', marginLeft: '8px' }}>

@@ -40,43 +40,29 @@ export const LoginView = () => {
     }}>
       <div className="auth-card">
         {/* Header Branding */}
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{
-            width: '60px',
-            height: '60px',
-            borderRadius: '18px',
-            background: 'linear-gradient(135deg, #6E8842 0%, #4D602E 100%)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 0 24px rgba(110, 136, 66, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.3)',
-            marginBottom: '16px'
-          }}>
-            <Dumbbell size={32} color="#FFFFFF" />
-          </div>
+        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+          <img
+            src="/logo-metodo-fr.png"
+            alt="Logo Método FR"
+            style={{
+              width: '90px',
+              height: '90px',
+              borderRadius: '20px',
+              objectFit: 'contain',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.7), 0 0 24px rgba(110, 136, 66, 0.35)',
+              border: '1px solid rgba(137, 168, 84, 0.35)',
+              backgroundColor: '#000',
+              marginBottom: '16px'
+            }}
+          />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#FFF', letterSpacing: '-0.02em' }}>
-              MOTTUS
+              MÉTODO FR
             </h1>
-            <span style={{
-              fontSize: '11px',
-              fontWeight: 700,
-              color: 'var(--md-sys-color-primary-light)',
-              letterSpacing: '0.12em',
-              backgroundColor: 'rgba(110, 136, 66, 0.15)',
-              padding: '2px 8px',
-              borderRadius: '6px',
-              border: '1px solid rgba(110, 136, 66, 0.3)'
-            }}>
-              STUDIO
-            </span>
           </div>
           <p style={{ fontSize: '13.5px', color: 'var(--md-sys-color-tertiary)', marginTop: '6px' }}>
             Sistema Inteligente de Entrenamiento & Rutinas
           </p>
-          <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', display: 'block', marginTop: '2px' }}>
-            appmottus.raevsi.cl
-          </span>
         </div>
 
         {/* Aviso de Cierre de Sesión por Inactividad (30 min) */}
@@ -147,7 +133,7 @@ export const LoginView = () => {
             <input
               type="text"
               required
-              placeholder="Ej: 12345678-9 o usuario@mottus.cl"
+              placeholder="Ej: 12345678-9 o tu email"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               style={{

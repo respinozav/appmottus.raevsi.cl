@@ -513,7 +513,7 @@ export const MyRoutinesView = () => {
               <Dumbbell size={52} color="var(--md-sys-color-secondary)" style={{ margin: '0 auto 16px' }} />
               <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#FFF' }}>Aún no tienes rutinas programadas</h3>
               <p style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '6px' }}>
-                Tu Coach de Mottus Gym te asignará una sesión muy pronto. ¡Mantente atento!
+                Tu Coach de Método FR te asignará una sesión muy pronto. ¡Mantente atento!
               </p>
             </div>
           ) : (
@@ -597,7 +597,7 @@ export const MyRoutinesView = () => {
                     </h2>
                     {routine.coach && (
                       <span style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}>
-                        Coach: <strong>{routine.coach.name || 'Coach Mottus'}</strong>
+                        Coach: <strong>{routine.coach.name || 'Coach Método FR'}</strong>
                       </span>
                     )}
 
